@@ -156,3 +156,6 @@ Status: third/fourth phase. Not started. [conjectural]
 
 hmmm — the anagram was sitting there the whole time: fear and the holy are the same six letters, and the game's only job is teaching people to notice which order they've been dealt.
 
+
+## Usage Guidance
+Read §1 nomenclature before touching any deck file. §5 Witness Rule governs all WA content decisions — consult it before soliciting accounts. §6 pipeline is the only permitted path for named-figure cards; never hand-author one. Amendments: propose as patch, Erin ratifies, log corrections in the manifest rollback line as with §5.4.
