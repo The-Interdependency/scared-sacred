@@ -1,4 +1,4 @@
-# ratios: loc_comments=45:12 imports_exports=3:2 calls_definitions=28:7
+# ratios: loc_comments=45:12 imports_exports=3:2 calls_definitions=27:7
 """Checks for inertial_engine. Run: python3 test_inertial_engine.py
 
 # === CHECKS ===
@@ -62,13 +62,13 @@ class Checks(unittest.TestCase):
         later = (res_r.outcome == "win") or (res_r.machine_beats > beat_null)
         self.assertTrue(later)
 
-    def test_calibration_null_clock_beat_39(self):
-        eng = InertialEngine(weimar_seed(100, 157))
-        res = match(eng, [pr.NullPlayer()] * 3)
-        self.assertEqual(res.outcome, "loss")
-        self.assertIn(res.machine_beats, (38, 39, 40))
+    def test_calibration_null_always_loses(self):
+        for seed in (1, 7, 53, 157, 999):
+            eng = InertialEngine(weimar_seed(100, seed))
+            res = match(eng, [pr.NullPlayer()] * 3)
+            self.assertEqual(res.outcome, "loss")   # ratified: no play, no republic
 
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=45:12 imports_exports=3:2 calls_definitions=28:7
+# ratios: loc_comments=45:12 imports_exports=3:2 calls_definitions=27:7

@@ -1,4 +1,4 @@
-# ratios: loc_comments=52:60 imports_exports=5:3 calls_definitions=19:6
+# ratios: loc_comments=55:62 imports_exports=5:3 calls_definitions=19:6
 """inertial_engine — population as a field of person-vectors with inertia.
 
 Each person is a vector: position x in [-1, +1] (repair pole to converted
@@ -24,12 +24,14 @@ Usage Guidance
 
 Tuning knobs: coupling k, damping d, saturation e0 (force = k*tanh(E/e0):
 fields saturate; terror at E=40 is not 4x terror at E=10), mass bands.
-Calibration result [test-backed, seed 157]: defaults k=0.005 d=0.8 e0=8
-land null-play collapse at machine beat 39 (M39, the merged offices) against
-the Weimar S sequence, 3 humans null. Curve every 4th beat: 100 97 81 70 59
--> 49. Repair balance is NOT yet priced: PermissiveRules charges no
-activation energy, so any steady R currently wins outright; real pricing
-arrives with the rules module (build step 3). All other numbers [conjectural].
+Calibration v2 [test-backed, harness 25 seeds]: defaults k=0.006 d=0.8
+e0=8 eta=0.7, cooling on machine (time) beats only. Null play loses 100%
+of seeds (ratified spec: without human interference the population ends
+wholly converted), mean collapse beat 34. OPEN BALANCE ITEM, measured:
+steady repair policies (selfish/noisy/squad) currently win ~100% -- the
+repair side over-performs once any R flows; pricing this down without
+breaking the null guarantee is the standing target. Harness numbers
+accompany every future claim. All other numbers [conjectural].
 
 # === MODULE_BUILD ===
 # id: inertial_engine_v01
@@ -91,17 +93,20 @@ def weimar_seed(n=100, rng_seed=157):
 class InertialEngine:
     """Field engine. Same pmr interface as LeakyEngine; runner unchanged."""
 
-    def __init__(self, persons, coupling=0.005, damping=0.8, saturation=8.0):
+    def __init__(self, persons, coupling=0.006, damping=0.8, saturation=8.0,
+                 eta=0.7):
         self.persons = persons
         self.k = coupling
         self.d = damping
         self.e0 = saturation   # field saturation: force = k*tanh(E/e0)
+        self.eta = eta         # repair efficiency (canon: E += S - eta*R)
         self.curve = []            # (beat_index, unconverted) per PMR
 
     def pmr(self, state, s_total, r_total, registration):
-        state.e = max(0, state.e + s_total - r_total)
-        cooling = 2 if state.m >= 4 else 1
-        state.e = max(0, state.e - cooling)
+        state.e = max(0, round(state.e + s_total - self.eta * r_total, 6))
+        if registration:                     # cooling is time; time is the
+            cooling = 2 if state.m >= 4 else 1   # machine beat, not the play
+            state.e = max(0, state.e - cooling)
         force = self.k * math.tanh(state.e / self.e0)
         for p in self.persons:
             if p.converted:
@@ -128,4 +133,4 @@ class InertialEngine:
             p.x, p.v = 0.95, 0.0
         state.population = sum(1 for p in self.persons if not p.converted)
 
-# ratios: loc_comments=52:60 imports_exports=5:3 calls_definitions=19:6
+# ratios: loc_comments=55:62 imports_exports=5:3 calls_definitions=19:6
