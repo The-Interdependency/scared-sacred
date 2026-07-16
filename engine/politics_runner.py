@@ -1,4 +1,4 @@
-# ratios: loc_comments=111:82 imports_exports=2:8 calls_definitions=55:18
+# ratios: loc_comments=117:86 imports_exports=2:8 calls_definitions=57:18
 """politics_runner — turn-sequence runner for POLITICS (base game).
 
 The runner owns the ORDER of play and nothing else. All game truth lives
@@ -73,6 +73,10 @@ clock demo runs end to end. All balance numbers [conjectural].
 # id: runner_interference_passthrough
 #   behavior: strain and m deltas reported by rules.interference are
 #     applied on the player beat that caused them
+# id: runner_field_totals_delegation
+#   behavior: when the rules module computes field totals, machine-beat
+#     passives (both sides) come from it; standing institutions repair
+#     every machine beat they survive
 # === END CONTRACTS ===
 """
 
@@ -176,9 +180,15 @@ class MatchRunner:
         if card is None:
             return "deck_empty"
         self.state.machine_beats += 1
-        passive = sum(s.get("passive", 0) for s in self.state.in_play_statics)
+        if hasattr(self.rules, "field_totals"):
+            passive_s, passive_r = self.rules.field_totals(self.state)
+        else:
+            passive_s = sum(s.get("passive", 0)
+                            for s in self.state.in_play_statics)
+            passive_r = 0
         self.state.log.append(("machine", card["name"], card["s"]))
-        self.engine.pmr(self.state, card["s"] + passive, 0, registration=True)
+        self.engine.pmr(self.state, card["s"] + passive_s, passive_r,
+                        registration=True)
         if self.state.population <= 50:
             return "loss"
         return None
@@ -230,4 +240,4 @@ class MatchRunner:
             return MatchResult("win", self.state.machine_beats, self.state)
         return MatchResult("loss", self.state.machine_beats, self.state)
 
-# ratios: loc_comments=111:82 imports_exports=2:8 calls_definitions=55:18
+# ratios: loc_comments=117:86 imports_exports=2:8 calls_definitions=57:18

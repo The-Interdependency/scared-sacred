@@ -1,4 +1,4 @@
-# ratios: loc_comments=35:75 imports_exports=1:1 calls_definitions=13:6
+# ratios: loc_comments=47:75 imports_exports=2:1 calls_definitions=19:7
 """rules_v1 — legality and pricing for POLITICS. Build step 3.
 
 The rules module answers exactly two questions and volunteers nothing:
@@ -79,12 +79,25 @@ class RulesV1:
     def legal(self, state, play):
         if not isinstance(play, dict):
             return False
+        blocked = play.get("blocked_by")
+        if blocked and any(s.get("name") == blocked
+                           for s in state.in_play_statics):
+            return False
+        if play.get("needs_m") and state.m < play["needs_m"]:
+            return False
         kind = play.get("kind", "action")
         if kind == "static":
             return True                      # laying an institution is free
         a = play.get("a", 0)
+        for name, extra in (play.get("a_extra_while") or {}).items():
+            if any(s.get("name") == name for s in state.in_play_statics):
+                a += extra
         burn = play.get("burn", 0)
         return state.e >= a - state.m - burn
+
+    def field_totals(self, state):
+        from cards_v1 import field_totals
+        return field_totals(state)
 
     # ------------------------------------------------------ per-turn
 
@@ -125,4 +138,4 @@ class RulesV1:
         reclaimers = [s for s in state.in_play_statics if s.get("reclaims")]
         return {"reclaim": 1 if reclaimers else 0}
 
-# ratios: loc_comments=35:75 imports_exports=1:1 calls_definitions=13:6
+# ratios: loc_comments=47:75 imports_exports=2:1 calls_definitions=19:7
