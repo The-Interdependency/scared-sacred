@@ -1,4 +1,4 @@
-# ratios: loc_comments=82:18 imports_exports=6:2 calls_definitions=53:9
+# ratios: loc_comments=83:18 imports_exports=6:2 calls_definitions=54:9
 """Checks for cards_v1 + weimar_data. Run: python3 test_cards_v1.py
 
 # === CHECKS ===
@@ -48,7 +48,8 @@ class Checks(unittest.TestCase):
     def test_check_se_gated_by_e(self):
         m = WeimarMachine([wd.MACHINE_SCRIPT[6], wd.MACHINE_SCRIPT[7]])  # M07,M08
         st = opening(); st.e = 2                         # below A_SE 5
-        m.next_card(st)
+        c = m.next_card(st)
+        m.resolve_se(c, st)                              # window closed, uncountered
         self.assertNotIn("next", m.chain_queue)          # gated: no chain
         self.assertTrue(m.delayed)                       # ...but delayed, armed
         st.e = 6
@@ -63,7 +64,7 @@ class Checks(unittest.TestCase):
             m = WeimarMachine([card])
             st = opening(); st.m = m_val
             st.in_play_statics.append({"name": "THE PULPITS", "passive_r": 1})
-            m.next_card(st)
+            m.resolve_se(m.next_card(st), st)
             pulpits = [s for s in st.in_play_statics
                        if s.get("name") == "THE PULPITS"][0]
             self.assertEqual(pulpits["perm_debuff"], expect)
@@ -85,7 +86,7 @@ class Checks(unittest.TestCase):
         st = opening(); st.e = 6; st.m = 3               # gate open, no doubling
         st.in_play_statics.append({"name": "THE COURTS", "passive_r": 1})
         ps_before, pr_before = field_totals(st)
-        m.next_card(st)
+        m.resolve_se(m.next_card(st), st)
         ps_after, pr_after = field_totals(st)
         self.assertEqual(pr_after, max(0, pr_before - 1))
         self.assertEqual(ps_after, ps_before + 1)        # the bench changed sides
@@ -114,4 +115,4 @@ class Checks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=82:18 imports_exports=6:2 calls_definitions=53:9
+# ratios: loc_comments=83:18 imports_exports=6:2 calls_definitions=54:9

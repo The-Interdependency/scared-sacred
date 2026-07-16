@@ -1,4 +1,4 @@
-# ratios: loc_comments=55:62 imports_exports=5:3 calls_definitions=19:6
+# ratios: loc_comments=55:64 imports_exports=5:3 calls_definitions=19:6
 """inertial_engine — population as a field of person-vectors with inertia.
 
 Each person is a vector: position x in [-1, +1] (repair pole to converted
@@ -24,14 +24,16 @@ Usage Guidance
 
 Tuning knobs: coupling k, damping d, saturation e0 (force = k*tanh(E/e0):
 fields saturate; terror at E=40 is not 4x terror at E=10), mass bands.
-Calibration v2 [test-backed, harness 25 seeds]: defaults k=0.006 d=0.8
-e0=8 eta=0.7, cooling on machine (time) beats only. Null play loses 100%
-of seeds (ratified spec: without human interference the population ends
-wholly converted), mean collapse beat 34. OPEN BALANCE ITEM, measured:
-steady repair policies (selfish/noisy/squad) currently win ~100% -- the
-repair side over-performs once any R flows; pricing this down without
-breaking the null guarantee is the standing target. Harness numbers
-accompany every future claim. All other numbers [conjectural].
+Calibration v3 [test-backed, harness 20 seeds, full mechanics: finite
+pile, hands of 5, reserve, reflexes, Gleichschaltung]: defaults k=0.009
+d=0.8 e0=8 eta=0.7, cooling on machine beats only. Spectrum: null 0%
+(collapse ~beat 24, trajectory has depth, not a 49-vs-50 graze) /
+noisy-coop 15% / selfish-steady 75% / scripted squad 100%. Reading:
+consistency is the floor, coordination is the ceiling -- showing up
+every turn beats sporadic teamwork; perfect coordination beats the
+script. Pacing-vs-difficulty tension logged: historical-pace null
+(beat ~38) and honest difficulty could not both hold; difficulty won
+per ratified wholly-converted spec. All other numbers [conjectural].
 
 # === MODULE_BUILD ===
 # id: inertial_engine_v01
@@ -93,7 +95,7 @@ def weimar_seed(n=100, rng_seed=157):
 class InertialEngine:
     """Field engine. Same pmr interface as LeakyEngine; runner unchanged."""
 
-    def __init__(self, persons, coupling=0.006, damping=0.8, saturation=8.0,
+    def __init__(self, persons, coupling=0.009, damping=0.8, saturation=8.0,
                  eta=0.7):
         self.persons = persons
         self.k = coupling
@@ -133,4 +135,4 @@ class InertialEngine:
             p.x, p.v = 0.95, 0.0
         state.population = sum(1 for p in self.persons if not p.converted)
 
-# ratios: loc_comments=55:62 imports_exports=5:3 calls_definitions=19:6
+# ratios: loc_comments=55:64 imports_exports=5:3 calls_definitions=19:6

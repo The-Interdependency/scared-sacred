@@ -1,4 +1,4 @@
-# ratios: loc_comments=125:58 imports_exports=2:3 calls_definitions=61:10
+# ratios: loc_comments=156:64 imports_exports=4:4 calls_definitions=76:12
 """cards_v1 — secret effects, interaction links, the M15 hinge, deck law.
 
 WeimarMachine plays the scripted set with its mechanics live: SE gating
@@ -30,7 +30,10 @@ unimplemented SEs. All numbers [conjectural].
 #   tests: test_cards_v1.py
 #   rollout: build step 4; ScriptedMachine retained for A/B
 #   rollback: feed bare S dicts to ScriptedMachine
-#   hmmm: NOOP_EFFECTS = noop_extra_card (M10), noop_window (M35),
+#   hmmm: eats_statics (Gleichschaltung) consumes the strongest standing
+#     player institution per machine beat once M23/K09 land — the late
+#     game eats the repair base, as it did. NOOP_EFFECTS =
+#     noop_extra_card (M10), noop_window (M35),
 #     camarilla rotation buff, book-fires *choice* target (resolves
 #     against highest passive_r for now) — logged, not hidden
 # === END MODULE_BUILD ===
@@ -57,6 +60,17 @@ unimplemented SEs. All numbers [conjectural].
 """
 
 NOOP_EFFECTS = {"noop_extra_card", "noop_window"}
+
+
+def build_response_pile(seed=53):
+    """Expand RESPONSE_DECK by copies into a shuffled 40-card pile."""
+    import random
+    from weimar_data import RESPONSE_DECK
+    pile = []
+    for c in RESPONSE_DECK:
+        pile += [dict(c) for _ in range(c.get("copies", 1))]
+    random.Random(seed).shuffle(pile)
+    return pile
 
 
 def field_totals(state):
@@ -86,8 +100,10 @@ class WeimarMachine:
     """The script with its mechanics live. History's plan, not history's
     guarantee: destruction feeds prerequisite skips."""
 
-    def __init__(self, script):
+    def __init__(self, script, reserve=None):
         self.script = [dict(c) for c in script]
+        self.reserve = [dict(c) for c in (reserve or [])]
+        self._by_id = {c["id"]: c for c in self.script + self.reserve}
         self.cursor = 0
         self.destroyed = set()
         self.chain_queue = []
@@ -173,6 +189,15 @@ class WeimarMachine:
 
     def next_card(self, state):
         self._tick_timed(state)
+        eaters = sum(s.get("eats_statics", 0) for s in state.in_play_statics
+                     if s.get("side") == "machine")
+        if eaters:
+            prey = sorted((s for s in state.in_play_statics
+                           if s.get("side") != "machine"),
+                          key=lambda s: -s.get("passive_r", 0))
+            for s in prey[:eaters]:
+                state.in_play_statics.remove(s)
+                state.log.append(("gleichgeschaltet", s.get("name")))
         for se in self.delayed:
             if state.e >= se.get("a_se", 0):
                 self._apply_effect(se, state, {"id": se["card_id"]})
@@ -183,7 +208,11 @@ class WeimarMachine:
             prereq = card.get("prereq")
             if prereq and prereq in self.destroyed:
                 state.log.append(("machine_skip", card["id"]))
-                continue
+                if self.reserve:                 # the plan dies; the machine
+                    card = self.reserve.pop(0)   # improvises the beat anyway
+                    state.log.append(("reserve_played", card["id"]))
+                else:
+                    continue
             s = card["s"]
             if card.get("hinge"):
                 s = self._resolve_hinge(card, state)
@@ -199,8 +228,19 @@ class WeimarMachine:
                 state.in_play_statics.append(st)
                 if "event_buff" in card["static"]:
                     self.event_buff += card["static"]["event_buff"]
-            self._resolve_se(card, state)
-            return {"name": card["name"], "id": card["id"], "s": s}
+            return {"name": card["name"], "id": card["id"], "s": s,
+                    "has_se": bool(card.get("se"))}
         return None
 
-# ratios: loc_comments=125:58 imports_exports=2:3 calls_definitions=61:10
+    def resolve_se(self, played, state, countered=False):
+        """Runner calls this after the reaction window. A countered SE
+        never arms; the interception is logged, not explained."""
+        card = self._by_id.get(played["id"])
+        if not card or not card.get("se"):
+            return
+        if countered:
+            state.log.append(("se_countered", card["id"]))
+            return
+        self._resolve_se(card, state)
+
+# ratios: loc_comments=156:64 imports_exports=4:4 calls_definitions=76:12

@@ -1,4 +1,4 @@
-# ratios: loc_comments=93:31 imports_exports=2:0 calls_definitions=0:0
+# ratios: loc_comments=114:31 imports_exports=2:0 calls_definitions=0:0
 """weimar_data — Fifty-Three Days, the set as executable data.
 
 Transcription of decks/weimar_53_days_v01.md into card dicts. Prose is
@@ -83,7 +83,8 @@ MACHINE_SCRIPT = [
   "se":{"a_se":3,"kind":"timed_debuff","target":"*choice*","amount":1,"beats":99}},
  {"id":"M22","date":"1933-06-22","name":"THE SPD BAN","s":2,"prereq":"M15",
   "destroys":["REICHSBANNER / IRON FRONT"]},
- {"id":"M23","date":"1933-07-05","name":"THE SELF-DISSOLUTIONS","s":2},
+ {"id":"M23","date":"1933-07-05","name":"THE SELF-DISSOLUTIONS","s":2,
+  "static":{"eats_statics":1}},
  {"id":"M24","date":"1933-07-14","name":"THE ONE-PARTY STATE","s":1,
   "static":{"passive_s":1,"blocks":"THE COALITION VOTE"}},
  {"id":"M25","date":"1933-07-20","name":"THE CONCORDAT","s":1,
@@ -118,19 +119,40 @@ RESPONSE_DECK = [
  {"name":"THE FOREIGN CORRESPONDENTS","kind":"static","copies":2,"passive_r":1,"a":1},
  {"name":"THE NEIGHBORHOOD","kind":"static","copies":4,"passive_r":1,"a":1},
  {"name":"THE LEAFLET RUN","kind":"action","copies":4,"r":1,"a":1},
- {"name":"STREET DEFENSE","kind":"action","copies":3,"r":2,"a":3,"self_strain":1},
+ {"name":"STREET DEFENSE","kind":"action","copies":3,"r":2,"a":3,"self_strain":1,"reflex":True},
  {"name":"THE STRIKE FUND","kind":"action","copies":2,"r":1,"a":2},
  {"name":"DOCUMENT & SMUGGLE","kind":"action","copies":4,"r":1,"a":1},
- {"name":"THE WHISPER NETWORK","kind":"action","copies":2,"r":1,"a":1},
+ {"name":"THE WHISPER NETWORK","kind":"action","copies":2,"r":1,"a":1,"reflex":True,"reveals":True},
  {"name":"THE GENERAL STRIKE","kind":"action","copies":2,"r":4,"a":7,
   "a_extra_while":{"SIX MILLION UNEMPLOYED":3}},
  {"name":"THE COALITION VOTE","kind":"action","copies":2,"r":3,"a":4,
   "needs_m":3,"blocked_by":"THE ONE-PARTY STATE","persists_marker":True},
  {"name":"JUDICIAL CHALLENGE","kind":"action","copies":2,"r":2,"a":2,
-  "blocked_by":"THE SECRET STATE POLICE"},
- {"name":"WELS' SPEECH","kind":"action","copies":2,"r":1,"a":1,"m_bonus":2},
+  "blocked_by":"THE SECRET STATE POLICE","reflex":True,"counters_se":True,"requires_static":"THE COURTS"},
+ {"name":"WELS' SPEECH","kind":"action","copies":2,"r":1,"a":1,"m_bonus":2,"reflex":True,"reflex_only_to":"M15"},
+]
+
+RESERVE_PILE = [
+ {"id":"K01","name":"THE SECOND KINGMAKER","s":2},
+ {"id":"K02","name":"THE PROVOCATEUR","s":3,
+  "se":{"a_se":3,"kind":"buff_next","amount":1}},
+ {"id":"K03","name":"THE DENUNCIATION DRIVE","s":2,
+  "se":{"a_se":3,"kind":"timed_debuff","target":"*choice*","amount":1,"beats":3}},
+ {"id":"K04","name":"THE LOYALTY OATH","s":2},
+ {"id":"K05","name":"THE SHOW TRIAL","s":2,
+  "se":{"a_se":4,"kind":"perm_debuff","target":"THE COURTS","amount":1}},
+ {"id":"K06","name":"THE STREET FUNERAL","s":2,
+  "se":{"a_se":2,"kind":"buff_next","amount":1}},
+ {"id":"K07","name":"THE BANKERS' DINNER","s":2},
+ {"id":"K08","name":"THE PRESS BUYOUT","s":2,
+  "se":{"a_se":3,"kind":"perm_debuff","target":"THE FREE PRESS","amount":1}},
+ {"id":"K09","name":"THE PARALLEL POLICE","s":2,"static":{"eats_statics":1}},
+ {"id":"K10","name":"THE CHURCH COMMITTEE","s":1,
+  "se":{"a_se":2,"kind":"perm_debuff","target":"THE PULPITS","amount":1}},
+ {"id":"K11","name":"THE EMERGENCY BUDGET","s":2},
+ {"id":"K12","name":"THE PLEBISCITE GAMBIT","s":2},
 ]
 
 DECK_TIERS = ((40, 59), (60, 79), (80, 99))
 
-# ratios: loc_comments=93:31 imports_exports=2:0 calls_definitions=0:0
+# ratios: loc_comments=114:31 imports_exports=2:0 calls_definitions=0:0

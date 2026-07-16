@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:32 imports_exports=7:6 calls_definitions=33:14
+# ratios: loc_comments=132:33 imports_exports=7:6 calls_definitions=43:17
 """harness_v1 — batch playtest instrument. Build step 5a.
 
 Runs match batches across player policies and seeds; reports win rate,
@@ -39,7 +39,7 @@ import random
 
 import politics_runner as pr
 import weimar_data as wd
-from cards_v1 import WeimarMachine
+from cards_v1 import WeimarMachine, build_response_pile
 from inertial_engine import InertialEngine, weimar_seed
 from rules_v1 import RulesV1
 
@@ -56,41 +56,61 @@ class HarnessRules(RulesV1):
         return s, dm + play.get("m_bonus", 0)
 
 
+def _from_hand(state, pid, want_kind=None, names=None):
+    for c in state.hands[pid]:
+        if names and c["name"] not in names:
+            continue
+        if want_kind and c.get("kind") != want_kind:
+            continue
+        return c
+    return None
+
+
 class SelfishPlayer:
     def __init__(self, rng):
         self.rng = rng
-        self.laid = 0
 
     def take_turn(self, state, pid):
-        static = None
-        if self.laid < 1:
-            static = dict(_card("THE NEIGHBORHOOD"), side="player")
-            self.laid += 1
-        act = dict(_card("THE LEAFLET RUN"),
-                   declared_target=f"own-{pid}")        # never shared
-        return pr.TurnPlays(static=static, actions=[act])
+        static = _from_hand(state, pid, want_kind="static")
+        if static is not None:
+            static = dict(static, side="player") if False else static
+            static["side"] = "player"
+        act = _from_hand(state, pid, want_kind="action")
+        acts = []
+        if act is not None:
+            act["declared_target"] = f"own-{pid}"       # never shared
+            acts = [act]
+        return pr.TurnPlays(static=static, actions=acts)
 
 
 class NoisyCoopPlayer:
     def __init__(self, rng, p_share=0.5):
         self.rng, self.p = rng, p_share
-        self.laid = 0
 
     def take_turn(self, state, pid):
         if self.rng.random() < 0.15:
             return pr.TurnPlays()                        # distracted
         static = None
-        if self.laid < 2 and self.rng.random() < 0.4:
-            static = dict(_card(self.rng.choice(
-                ["THE NEIGHBORHOOD", "THE EXILE NETWORK",
-                 "THE FOREIGN CORRESPONDENTS"])), side="player")
-            self.laid += 1
-        share = self.rng.random() < self.p
-        target = "shared" if share else f"own-{pid}"
-        name = "WELS' SPEECH" if (state.m < 3 and self.rng.random() < 0.3) \
-            else "THE LEAFLET RUN"
-        return pr.TurnPlays(actions=[dict(_card(name),
-                                          declared_target=target)])
+        if self.rng.random() < 0.4:
+            static = _from_hand(state, pid, want_kind="static")
+            if static is not None:
+                static["side"] = "player"
+        act = _from_hand(state, pid, want_kind="action")
+        acts = []
+        if act is not None:
+            share = self.rng.random() < self.p
+            act["declared_target"] = "shared" if share else f"own-{pid}"
+            acts = [act]
+        return pr.TurnPlays(static=static, actions=acts)
+
+    def react(self, state, pid, mcard):
+        if self.rng.random() < 0.25:
+            hand = state.hands[pid]
+            rx = [c for c in hand if c.get("reflex")]
+            burn = [c for c in hand if not c.get("reflex")]
+            if rx and burn:
+                return rx[0], burn[0]
+        return None
 
 
 class SquadPlayer:
@@ -99,19 +119,36 @@ class SquadPlayer:
 
     def take_turn(self, state, pid):
         self.t += 1
-        static = None
-        if self.t == 1:
-            static = dict(_card("THE NEIGHBORHOOD"), side="player")
-        if self.t == 2:
-            static = dict(_card("THE EXILE NETWORK"), side="player")
+        static = _from_hand(state, pid, want_kind="static")
+        if static is not None:
+            static["side"] = "player"
         if state.m < 3:
-            act = dict(_card("WELS' SPEECH"), declared_target="shared")
+            act = _from_hand(state, pid, names=("WELS' SPEECH",)) \
+                or _from_hand(state, pid, want_kind="action")
         elif not any(s.get("name") == "THE COALITION VOTE"
                      for s in state.in_play_statics):
-            act = dict(_card("THE COALITION VOTE"), declared_target="shared")
+            act = _from_hand(state, pid, names=("THE COALITION VOTE",)) \
+                or _from_hand(state, pid, want_kind="action")
         else:
-            act = dict(_card("THE LEAFLET RUN"), declared_target="shared")
-        return pr.TurnPlays(static=static, actions=[act])
+            act = _from_hand(state, pid, want_kind="action")
+        acts = []
+        if act is not None:
+            act["declared_target"] = "shared"
+            acts = [act]
+        # coalition vote persists as marker on resolve
+        for a_ in acts:
+            if a_.get("persists_marker"):
+                pass
+        return pr.TurnPlays(static=static, actions=acts)
+
+    def react(self, state, pid, mcard):
+        if mcard.get("id") == "M15":
+            hand = state.hands[pid]
+            wels = [c for c in hand if c["name"] == "WELS' SPEECH"]
+            burn = [c for c in hand if c["name"] != "WELS' SPEECH"]
+            if wels and burn:
+                return wels[0], burn[0]
+        return None
 
 
 POLICIES = {
@@ -122,15 +159,18 @@ POLICIES = {
 }
 
 
-def run_match(policy, seed, humans=3):
+def run_match(policy, seed, humans=3, hand_size=5):
     rng = random.Random(seed)
     st = pr.GameState(**wd.WEIMAR_OPENING)
     st.in_play_statics.extend(dict(s) for s in wd.SETUP_STATICS)
+    st.draw_pile = build_response_pile(seed)
     eng = InertialEngine(weimar_seed(100, seed))
     players = [POLICIES[policy](random.Random(seed * 101 + i))
                for i in range(humans)]
-    res = pr.MatchRunner(eng, WeimarMachine(wd.MACHINE_SCRIPT),
-                         players, st, rules=HarnessRules()).run()
+    res = pr.MatchRunner(eng, WeimarMachine(wd.MACHINE_SCRIPT,
+                                            reserve=wd.RESERVE_PILE),
+                         players, st, rules=HarnessRules(),
+                         hand_size=hand_size).run()
     hinge = [ev for ev in res.state.log if ev[0].startswith("hinge")]
     return {"outcome": res.outcome, "beats": res.machine_beats,
             "pop": res.state.population,
@@ -156,4 +196,4 @@ if __name__ == "__main__":
         print(f"{k:8s} win {v['win_rate']:.0%}  end-beat "
               f"{v['mean_end_beat']:.1f}  pop {v['mean_pop']:.0f}  "
               f"hinge-failed {v['hinge_fail_rate']:.0%}")
-# ratios: loc_comments=97:32 imports_exports=7:6 calls_definitions=33:14
+# ratios: loc_comments=132:33 imports_exports=7:6 calls_definitions=43:17

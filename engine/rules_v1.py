@@ -1,4 +1,4 @@
-# ratios: loc_comments=47:75 imports_exports=2:1 calls_definitions=19:7
+# ratios: loc_comments=63:81 imports_exports=2:1 calls_definitions=28:8
 """rules_v1 — legality and pricing for POLITICS. Build step 3.
 
 The rules module answers exactly two questions and volunteers nothing:
@@ -67,6 +67,10 @@ All numbers [conjectural].
 # id: rules_reclaims_gated
 #   behavior: only reclaiming statics reclaim, at most one vector per
 #     rotation
+# id: rules_reflex_gate_uses_incoming
+#   behavior: reflex legality evaluates a - m against e plus the
+#     triggering card's s; reflex_only_to, requires_static and
+#     blocked_by all bind
 # === END CONTRACTS ===
 """
 
@@ -98,6 +102,25 @@ class RulesV1:
     def field_totals(self, state):
         from cards_v1 import field_totals
         return field_totals(state)
+
+    def reflex_legal(self, state, play, incoming):
+        """Reflex gate: the provocation supplies its own activation
+        energy — evaluate A - M against E plus the incoming card's S."""
+        if not play.get("reflex"):
+            return False
+        only = play.get("reflex_only_to")
+        if only and incoming.get("id") != only:
+            return False
+        req = play.get("requires_static")
+        if req and not any(s.get("name") == req and s.get("side") != "machine"
+                           for s in state.in_play_statics):
+            return False
+        blocked = play.get("blocked_by")
+        if blocked and any(s.get("name") == blocked
+                           for s in state.in_play_statics):
+            return False
+        a = play.get("a", 0)
+        return state.e + incoming.get("s", 0) >= a - state.m
 
     # ------------------------------------------------------ per-turn
 
@@ -138,4 +161,4 @@ class RulesV1:
         reclaimers = [s for s in state.in_play_statics if s.get("reclaims")]
         return {"reclaim": 1 if reclaimers else 0}
 
-# ratios: loc_comments=47:75 imports_exports=2:1 calls_definitions=19:7
+# ratios: loc_comments=63:81 imports_exports=2:1 calls_definitions=28:8

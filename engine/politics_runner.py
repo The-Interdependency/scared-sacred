@@ -1,4 +1,4 @@
-# ratios: loc_comments=117:86 imports_exports=2:8 calls_definitions=57:18
+# ratios: loc_comments=171:99 imports_exports=2:8 calls_definitions=84:20
 """politics_runner — turn-sequence runner for POLITICS (base game).
 
 The runner owns the ORDER of play and nothing else. All game truth lives
@@ -77,6 +77,15 @@ clock demo runs end to end. All balance numbers [conjectural].
 #   behavior: when the rules module computes field totals, machine-beat
 #     passives (both sides) come from it; standing institutions repair
 #     every machine beat they survive
+# id: runner_hand_law
+#   behavior: in hand mode, a play resolves only from the hand holding
+#     it; played and burned cards move to the discard pile; the turn ends
+#     with one draw while the pile lasts
+# id: runner_reaction_window
+#   behavior: after a machine card reveals and before its PMR, players
+#     may discard one card to reflex a reflex-flagged card into the beat;
+#     a counters_se reflex prevents the incoming secret effect from ever
+#     arming
 # === END CONTRACTS ===
 """
 
@@ -94,6 +103,9 @@ class GameState:
     machine_beats: int = 0
     in_play_statics: list = field(default_factory=list)
     log: list = field(default_factory=list)
+    draw_pile: list = field(default_factory=list)
+    hands: list = field(default_factory=list)
+    discard_pile: list = field(default_factory=list)
 
 
 @dataclass
@@ -167,13 +179,60 @@ class PermissiveRules:
 class MatchRunner:
     """Owns the sequence. Machine first; one machine beat per player turn."""
 
-    def __init__(self, engine, machine, players, state, rules=None):
+    def __init__(self, engine, machine, players, state, rules=None,
+                 hand_size=None):
         self.engine = engine
         self.machine = machine
         self.players = players
         self.state = state
         self.rules = rules or PermissiveRules()
         self._targets = []
+        self.hand_mode = hand_size is not None
+        if self.hand_mode:
+            for _ in players:
+                self.state.hands.append(
+                    [self.state.draw_pile.pop(0)
+                     for _ in range(min(hand_size,
+                                        len(self.state.draw_pile)))])
+
+    def _take_from_hand(self, pid, card):
+        """Hand law: a card resolves only out of the hand that holds it."""
+        hand = self.state.hands[pid]
+        for i, c in enumerate(hand):
+            if c is card or c == card:
+                self.state.discard_pile.append(hand.pop(i))
+                return True
+        return False
+
+    def _reaction_window(self, mcard):
+        """Machine card revealed; before its PMR, any player may discard
+        one card to reflex one reflex-flagged card into the beat.
+        Returns (extra_r, se_countered)."""
+        extra_r, countered = 0, False
+        for pid, player in enumerate(self.players):
+            if not hasattr(player, "react"):
+                continue
+            rx = player.react(self.state, pid, mcard)
+            if not rx:
+                continue
+            reflex_card, burn = rx
+            legal = (not hasattr(self.rules, "reflex_legal")
+                     or self.rules.reflex_legal(self.state, reflex_card,
+                                                mcard))
+            if not legal:
+                continue
+            if self.hand_mode:
+                if not self._take_from_hand(pid, burn):
+                    continue
+                if not self._take_from_hand(pid, reflex_card):
+                    continue
+            extra_r += reflex_card.get("r", 0)
+            self._targets.append(mcard.get("id"))
+            self.state.log.append(("reflex", pid, reflex_card.get("name"),
+                                   mcard.get("id")))
+            if reflex_card.get("counters_se") and mcard.get("has_se"):
+                countered = True
+        return extra_r, countered
 
     def _machine_beat(self):
         card = self.machine.next_card(self.state)
@@ -187,8 +246,11 @@ class MatchRunner:
                             for s in self.state.in_play_statics)
             passive_r = 0
         self.state.log.append(("machine", card["name"], card["s"]))
-        self.engine.pmr(self.state, card["s"] + passive_s, passive_r,
-                        registration=True)
+        reflex_r, countered = self._reaction_window(card)
+        if hasattr(self.machine, "resolve_se"):
+            self.machine.resolve_se(card, self.state, countered=countered)
+        self.engine.pmr(self.state, card["s"] + passive_s,
+                        passive_r + reflex_r, registration=True)
         if self.state.population <= 50:
             return "loss"
         return None
@@ -197,6 +259,11 @@ class MatchRunner:
         plays = self.players[pid].take_turn(self.state, pid)
         if hasattr(self.rules, "validate_turn"):
             plays = self.rules.validate_turn(self.state, plays)
+        if self.hand_mode:
+            if plays.static and not self._take_from_hand(pid, plays.static):
+                plays.static = None
+            plays.actions = [a for a in plays.actions
+                             if self._take_from_hand(pid, a)]
         r_total, s_extra = 0, 0
         if plays.static and self.rules.legal(self.state, plays.static):
             self.state.in_play_statics.append(plays.static)
@@ -212,6 +279,8 @@ class MatchRunner:
                     s_extra += ds
                     self.state.m = max(0, min(5, self.state.m + dm))
         self.engine.pmr(self.state, s_extra, r_total, registration=False)
+        if self.hand_mode and self.state.draw_pile:
+            self.state.hands[pid].append(self.state.draw_pile.pop(0))
         return None
 
     def _rotation_boundary(self):
@@ -240,4 +309,4 @@ class MatchRunner:
             return MatchResult("win", self.state.machine_beats, self.state)
         return MatchResult("loss", self.state.machine_beats, self.state)
 
-# ratios: loc_comments=117:86 imports_exports=2:8 calls_definitions=57:18
+# ratios: loc_comments=171:99 imports_exports=2:8 calls_definitions=84:20
