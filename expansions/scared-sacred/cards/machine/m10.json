@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m10.png",
+  "status": "awaiting"
+ },
+ "date": "1933-03-05",
+ "id": "M10",
+ "name": "THE 43.9% ELECTION",
+ "s": 2,
+ "se": {
+  "a_se": 3,
+  "kind": "noop_extra_card"
+ }
+}

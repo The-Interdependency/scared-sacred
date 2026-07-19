@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m32.png",
+  "status": "awaiting"
+ },
+ "date": "1934-01-30",
+ "id": "M32",
+ "name": "THE RECONSTRUCTION ACT",
+ "prereq": "M11",
+ "s": 2
+}

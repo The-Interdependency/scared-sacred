@@ -1,0 +1,16 @@
+{
+ "art": {
+  "file": "m15.png",
+  "status": "awaiting"
+ },
+ "date": "1933-03-23",
+ "hinge": {
+  "fail_s": 0,
+  "needs_m": 3,
+  "needs_marker": "THE COALITION VOTE",
+  "reprice_rest": 1
+ },
+ "id": "M15",
+ "name": "THE LEGALIST COUP (ENABLING ACT)",
+ "s": 3
+}

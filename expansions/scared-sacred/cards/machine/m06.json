@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "m06.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-24",
+ "id": "M06",
+ "name": "THE LIEBKNECHT HOUSE RAID",
+ "s": 1,
+ "se": {
+  "a_se": 3,
+  "amount": 1,
+  "kind": "arm_next"
+ }
+}

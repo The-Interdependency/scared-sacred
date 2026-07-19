@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m02.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-01",
+ "id": "M02",
+ "name": "DISSOLUTION",
+ "prereq": "X_A48",
+ "s": 1
+}

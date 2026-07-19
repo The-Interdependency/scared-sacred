@@ -1,0 +1,17 @@
+{
+ "art": {
+  "file": "m03.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-04",
+ "id": "M03",
+ "name": "DECREE FOR THE PROTECTION OF THE GERMAN PEOPLE",
+ "s": 2,
+ "se": {
+  "a_se": 4,
+  "amount": 2,
+  "beats": 3,
+  "kind": "timed_debuff",
+  "target": "THE FREE PRESS"
+ }
+}

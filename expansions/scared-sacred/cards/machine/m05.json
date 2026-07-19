@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m05.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-22",
+ "id": "M05",
+ "name": "THE DEPUTIZED STREET",
+ "prereq": "M04",
+ "s": 2
+}

@@ -1,0 +1,16 @@
+{
+ "art": {
+  "file": "m25.png",
+  "status": "awaiting"
+ },
+ "date": "1933-07-20",
+ "id": "M25",
+ "name": "THE CONCORDAT",
+ "s": 1,
+ "se": {
+  "a_se": 2,
+  "amount": 1,
+  "kind": "perm_debuff",
+  "target": "THE PULPITS"
+ }
+}

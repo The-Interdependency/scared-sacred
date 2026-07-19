@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m22.png",
+  "status": "awaiting"
+ },
+ "date": "1933-06-22",
+ "destroys": [
+  "REICHSBANNER / IRON FRONT"
+ ],
+ "id": "M22",
+ "name": "THE SPD BAN",
+ "prereq": "M15",
+ "s": 2
+}

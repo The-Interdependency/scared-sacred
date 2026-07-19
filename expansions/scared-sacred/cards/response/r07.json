@@ -1,0 +1,11 @@
+{
+ "a": 1,
+ "art": {
+  "file": "r07.png",
+  "status": "awaiting"
+ },
+ "copies": 2,
+ "kind": "static",
+ "name": "THE FOREIGN CORRESPONDENTS",
+ "passive_r": 1
+}

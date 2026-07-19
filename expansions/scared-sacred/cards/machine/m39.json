@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m39.png",
+  "status": "awaiting"
+ },
+ "date": "1934-08-02",
+ "destroys": [
+  "THE CAMARILLA"
+ ],
+ "id": "M39",
+ "name": "THE MERGED OFFICES",
+ "prereq": "M36",
+ "s": 3
+}

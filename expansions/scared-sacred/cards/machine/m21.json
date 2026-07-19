@@ -1,0 +1,17 @@
+{
+ "art": {
+  "file": "m21.png",
+  "status": "awaiting"
+ },
+ "date": "1933-05-10",
+ "id": "M21",
+ "name": "THE BOOK FIRES",
+ "s": 1,
+ "se": {
+  "a_se": 3,
+  "amount": 1,
+  "beats": 99,
+  "kind": "timed_debuff",
+  "target": "*choice*"
+ }
+}

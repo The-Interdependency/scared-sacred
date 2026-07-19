@@ -1,0 +1,16 @@
+{
+ "art": {
+  "file": "m17.png",
+  "status": "awaiting"
+ },
+ "date": "1933-04-07",
+ "id": "M17",
+ "name": "THE CIVIL SERVICE LAW",
+ "s": 2,
+ "se": {
+  "a_se": 4,
+  "kind": "flip_static",
+  "target": "THE COURTS",
+  "to_passive_s": 1
+ }
+}

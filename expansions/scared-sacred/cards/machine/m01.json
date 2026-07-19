@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m01.png",
+  "status": "awaiting"
+ },
+ "date": "1933-01-30",
+ "id": "M01",
+ "name": "THE BACKROOM KINGMAKER",
+ "s": 2,
+ "se": {
+  "a_se": 2,
+  "kind": "chain"
+ }
+}

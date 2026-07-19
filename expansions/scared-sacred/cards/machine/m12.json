@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m12.png",
+  "status": "awaiting"
+ },
+ "date": "1933-03-13",
+ "id": "M12",
+ "name": "THE MINISTRY OF PUBLIC ENLIGHTENMENT",
+ "prereq": "M10",
+ "s": 2,
+ "static": {
+  "event_buff": 1
+ }
+}

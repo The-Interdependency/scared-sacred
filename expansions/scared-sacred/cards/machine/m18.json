@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m18.png",
+  "status": "awaiting"
+ },
+ "date": "1933-04-26",
+ "id": "M18",
+ "name": "THE SECRET STATE POLICE",
+ "s": 1,
+ "static": {
+  "name_alias": "GESTAPO",
+  "passive_s": 1
+ }
+}

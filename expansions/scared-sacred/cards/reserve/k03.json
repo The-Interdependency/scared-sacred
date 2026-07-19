@@ -1,0 +1,16 @@
+{
+ "art": {
+  "file": "k03.png",
+  "status": "awaiting"
+ },
+ "id": "K03",
+ "name": "THE DENUNCIATION DRIVE",
+ "s": 2,
+ "se": {
+  "a_se": 3,
+  "amount": 1,
+  "beats": 3,
+  "kind": "timed_debuff",
+  "target": "*choice*"
+ }
+}

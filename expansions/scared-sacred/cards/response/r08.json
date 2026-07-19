@@ -1,0 +1,11 @@
+{
+ "a": 1,
+ "art": {
+  "file": "r08.png",
+  "status": "awaiting"
+ },
+ "copies": 4,
+ "kind": "static",
+ "name": "THE NEIGHBORHOOD",
+ "passive_r": 1
+}

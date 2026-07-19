@@ -1,0 +1,14 @@
+{
+ "a": 1,
+ "art": {
+  "file": "r17.png",
+  "status": "awaiting"
+ },
+ "copies": 2,
+ "kind": "action",
+ "m_bonus": 2,
+ "name": "WELS' SPEECH",
+ "r": 1,
+ "reflex": true,
+ "reflex_only_to": "M15"
+}

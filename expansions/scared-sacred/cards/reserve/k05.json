@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "k05.png",
+  "status": "awaiting"
+ },
+ "id": "K05",
+ "name": "THE SHOW TRIAL",
+ "s": 2,
+ "se": {
+  "a_se": 4,
+  "amount": 1,
+  "kind": "perm_debuff",
+  "target": "THE COURTS"
+ }
+}

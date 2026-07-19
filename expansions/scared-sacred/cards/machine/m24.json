@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m24.png",
+  "status": "awaiting"
+ },
+ "date": "1933-07-14",
+ "id": "M24",
+ "name": "THE ONE-PARTY STATE",
+ "s": 1,
+ "static": {
+  "blocks": "THE COALITION VOTE",
+  "passive_s": 1
+ }
+}

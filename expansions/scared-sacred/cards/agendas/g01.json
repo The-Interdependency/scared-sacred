@@ -1,0 +1,10 @@
+{
+ "art": {
+  "file": "g01.png",
+  "status": "awaiting"
+ },
+ "compatible": true,
+ "floor": 50,
+ "kind": "population_floor",
+ "name": "THE SURVIVOR"
+}

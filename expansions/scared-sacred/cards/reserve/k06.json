@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "k06.png",
+  "status": "awaiting"
+ },
+ "id": "K06",
+ "name": "THE STREET FUNERAL",
+ "s": 2,
+ "se": {
+  "a_se": 2,
+  "amount": 1,
+  "kind": "buff_next"
+ }
+}

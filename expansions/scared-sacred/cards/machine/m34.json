@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m34.png",
+  "status": "awaiting"
+ },
+ "date": "1934-04-20",
+ "id": "M34",
+ "name": "HIMMLER TAKES THE GESTAPO",
+ "prereq": "M18",
+ "s": 1
+}

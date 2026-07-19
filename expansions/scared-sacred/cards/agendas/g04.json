@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "g04.png",
+  "status": "awaiting"
+ },
+ "card": "DOCUMENT & SMUGGLE",
+ "compatible": true,
+ "count": 3,
+ "kind": "named_plays",
+ "name": "THE ARCHIVIST"
+}

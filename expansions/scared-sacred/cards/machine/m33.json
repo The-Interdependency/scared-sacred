@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m33.png",
+  "status": "awaiting"
+ },
+ "date": "1934-02-24",
+ "id": "M33",
+ "name": "THE PEOPLE'S COURT ANNOUNCED",
+ "prereq": "M17",
+ "s": 1
+}

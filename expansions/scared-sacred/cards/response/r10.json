@@ -1,0 +1,13 @@
+{
+ "a": 3,
+ "art": {
+  "file": "r10.png",
+  "status": "awaiting"
+ },
+ "copies": 3,
+ "kind": "action",
+ "name": "STREET DEFENSE",
+ "r": 2,
+ "reflex": true,
+ "self_strain": 1
+}

@@ -1,0 +1,11 @@
+{
+ "a": 2,
+ "art": {
+  "file": "r04.png",
+  "status": "awaiting"
+ },
+ "copies": 1,
+ "kind": "static",
+ "name": "THE COURTS",
+ "passive_r": 1
+}

@@ -1,0 +1,13 @@
+{
+ "art": {
+  "file": "m23.png",
+  "status": "awaiting"
+ },
+ "date": "1933-07-05",
+ "id": "M23",
+ "name": "THE SELF-DISSOLUTIONS",
+ "s": 2,
+ "static": {
+  "eats_statics": 1
+ }
+}

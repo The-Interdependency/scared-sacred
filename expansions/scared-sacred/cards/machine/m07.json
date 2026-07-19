@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "m07.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-27",
+ "id": "M07",
+ "name": "THE FIRE OPPORTUNIST",
+ "s": 3,
+ "se": {
+  "a_se": 5,
+  "delay_if_gated": 1,
+  "kind": "chain"
+ }
+}

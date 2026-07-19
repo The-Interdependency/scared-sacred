@@ -1,0 +1,10 @@
+{
+ "art": {
+  "file": "x1.png",
+  "status": "awaiting"
+ },
+ "name": "ARTICLE 48",
+ "passive_s": 1,
+ "side": "machine",
+ "untargetable_while_e": 3
+}

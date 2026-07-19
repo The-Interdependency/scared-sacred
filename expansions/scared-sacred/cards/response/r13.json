@@ -1,0 +1,13 @@
+{
+ "a": 1,
+ "art": {
+  "file": "r13.png",
+  "status": "awaiting"
+ },
+ "copies": 2,
+ "kind": "action",
+ "name": "THE WHISPER NETWORK",
+ "r": 1,
+ "reflex": true,
+ "reveals": true
+}

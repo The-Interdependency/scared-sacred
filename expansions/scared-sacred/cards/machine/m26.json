@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m26.png",
+  "status": "awaiting"
+ },
+ "date": "1933-09-22",
+ "id": "M26",
+ "name": "THE CULTURE CHAMBER",
+ "prereq": "M12",
+ "s": 1
+}

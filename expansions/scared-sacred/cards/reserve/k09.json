@@ -1,0 +1,12 @@
+{
+ "art": {
+  "file": "k09.png",
+  "status": "awaiting"
+ },
+ "id": "K09",
+ "name": "THE PARALLEL POLICE",
+ "s": 2,
+ "static": {
+  "eats_statics": 1
+ }
+}

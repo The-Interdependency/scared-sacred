@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "m14.png",
+  "status": "awaiting"
+ },
+ "date": "1933-03-21",
+ "id": "M14",
+ "name": "THE DAY OF POTSDAM",
+ "s": 1,
+ "se": {
+  "a_se": 2,
+  "amount": 1,
+  "kind": "buff_next"
+ }
+}

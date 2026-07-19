@@ -1,0 +1,11 @@
+{
+ "a": 3,
+ "art": {
+  "file": "r03.png",
+  "status": "awaiting"
+ },
+ "copies": 2,
+ "kind": "static",
+ "name": "REICHSBANNER / IRON FRONT",
+ "passive_r": 2
+}

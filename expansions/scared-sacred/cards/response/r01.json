@@ -1,0 +1,11 @@
+{
+ "a": 2,
+ "art": {
+  "file": "r01.png",
+  "status": "awaiting"
+ },
+ "copies": 2,
+ "kind": "static",
+ "name": "THE FREE PRESS",
+ "passive_r": 2
+}

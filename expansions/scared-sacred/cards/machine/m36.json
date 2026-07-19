@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m36.png",
+  "status": "awaiting"
+ },
+ "date": "1934-06-30",
+ "id": "M36",
+ "name": "THE PURGE",
+ "prereq": "M35",
+ "s": 3
+}

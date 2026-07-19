@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "k10.png",
+  "status": "awaiting"
+ },
+ "id": "K10",
+ "name": "THE CHURCH COMMITTEE",
+ "s": 1,
+ "se": {
+  "a_se": 2,
+  "amount": 1,
+  "kind": "perm_debuff",
+  "target": "THE PULPITS"
+ }
+}

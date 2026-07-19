@@ -1,0 +1,11 @@
+{
+ "art": {
+  "file": "m11.png",
+  "status": "awaiting"
+ },
+ "date": "1933-03-08",
+ "id": "M11",
+ "name": "THE STATE SEIZURES",
+ "prereq": "M08",
+ "s": 2
+}

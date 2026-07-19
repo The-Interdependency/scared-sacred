@@ -1,0 +1,15 @@
+{
+ "art": {
+  "file": "m08.png",
+  "status": "awaiting"
+ },
+ "date": "1933-02-28",
+ "id": "M08",
+ "name": "THE FIRE DECREE",
+ "prereq": "M07",
+ "s": 2,
+ "static": {
+  "debuff_response": 1,
+  "passive_s": 2
+ }
+}

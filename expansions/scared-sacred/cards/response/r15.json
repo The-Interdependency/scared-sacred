@@ -1,0 +1,14 @@
+{
+ "a": 4,
+ "art": {
+  "file": "r15.png",
+  "status": "awaiting"
+ },
+ "blocked_by": "THE ONE-PARTY STATE",
+ "copies": 2,
+ "kind": "action",
+ "name": "THE COALITION VOTE",
+ "needs_m": 3,
+ "persists_marker": true,
+ "r": 3
+}

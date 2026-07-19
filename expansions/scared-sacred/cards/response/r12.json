@@ -1,0 +1,11 @@
+{
+ "a": 1,
+ "art": {
+  "file": "r12.png",
+  "status": "awaiting"
+ },
+ "copies": 4,
+ "kind": "action",
+ "name": "DOCUMENT & SMUGGLE",
+ "r": 1
+}

@@ -1,0 +1,10 @@
+{
+ "art": {
+  "file": "g05.png",
+  "status": "awaiting"
+ },
+ "compatible": false,
+ "kind": "static_stands",
+ "name": "THE QUIET BENEFICIARY",
+ "static": "ARTICLE 48"
+}

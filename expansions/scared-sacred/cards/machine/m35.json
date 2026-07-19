@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m35.png",
+  "status": "awaiting"
+ },
+ "date": "1934-06-17",
+ "id": "M35",
+ "name": "THE MARBURG SPEECH",
+ "s": 0,
+ "se": {
+  "a_se": 5,
+  "kind": "noop_window"
+ }
+}

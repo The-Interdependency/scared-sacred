@@ -1,0 +1,14 @@
+{
+ "art": {
+  "file": "m19.png",
+  "status": "awaiting"
+ },
+ "date": "1933-05-01",
+ "id": "M19",
+ "name": "THE STOLEN HOLIDAY",
+ "s": 1,
+ "se": {
+  "a_se": 2,
+  "kind": "chain"
+ }
+}

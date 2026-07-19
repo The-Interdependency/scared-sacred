@@ -1,0 +1,15 @@
+{
+ "a": 2,
+ "art": {
+  "file": "r16.png",
+  "status": "awaiting"
+ },
+ "blocked_by": "THE SECRET STATE POLICE",
+ "copies": 2,
+ "counters_se": true,
+ "kind": "action",
+ "name": "JUDICIAL CHALLENGE",
+ "r": 2,
+ "reflex": true,
+ "requires_static": "THE COURTS"
+}
