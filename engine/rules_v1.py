@@ -1,4 +1,4 @@
-# ratios: loc_comments=63:81 imports_exports=2:1 calls_definitions=28:8
+# ratios: loc_comments=68:91 imports_exports=2:1 calls_definitions=31:9
 """rules_v1 — legality and pricing for POLITICS. Build step 3.
 
 The rules module answers exactly two questions and volunteers nothing:
@@ -67,6 +67,12 @@ All numbers [conjectural].
 # id: rules_reclaims_gated
 #   behavior: only reclaiming statics reclaim, at most one vector per
 #     rotation
+# id: rules_habituation_decay
+#   behavior: effective r decays by one per two prior table-wide plays
+#     of the same card name, floored at zero
+# id: rules_reclaim_priced
+#   behavior: reclamation requires e at or above the reclaiming static's
+#     full a, undiscounted by m
 # id: rules_reflex_gate_uses_incoming
 #   behavior: reflex legality evaluates a - m against e plus the
 #     triggering card's s; reflex_only_to, requires_static and
@@ -156,9 +162,19 @@ class RulesV1:
         return -1                             # nobody declared anything
 
     def rotation_effects(self, state):
-        """Reclamation permission: one vector per rotation, and only if a
-        reclaiming static stands."""
+        """Reclamation permission: one vector per rotation, only if a
+        reclaiming static stands, priced at the static's full A,
+        undiscounted by M (reclaiming a person costs more than keeping
+        them was — ledger ruling 4)."""
         reclaimers = [s for s in state.in_play_statics if s.get("reclaims")]
-        return {"reclaim": 1 if reclaimers else 0}
+        if reclaimers and state.e >= reclaimers[0].get("a", 0):
+            return {"reclaim": 1}
+        return {"reclaim": 0}
 
-# ratios: loc_comments=63:81 imports_exports=2:1 calls_definitions=28:8
+    def effective_r(self, state, play):
+        """Habituation: the third leaflet shocks no one. Each prior play
+        of the same card name across the table decays its R."""
+        prior = state.tallies.get("played:" + play.get("name", ""), 0)
+        return max(0, play.get("r", 0) - prior // 2)
+
+# ratios: loc_comments=68:91 imports_exports=2:1 calls_definitions=31:9

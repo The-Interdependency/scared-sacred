@@ -1,4 +1,4 @@
-# ratios: loc_comments=156:64 imports_exports=4:4 calls_definitions=76:12
+# ratios: loc_comments=158:65 imports_exports=4:4 calls_definitions=77:13
 """cards_v1 — secret effects, interaction links, the M15 hinge, deck law.
 
 WeimarMachine plays the scripted set with its mechanics live: SE gating
@@ -114,6 +114,10 @@ class WeimarMachine:
 
     def destroy(self, ident):
         self.destroyed.add(ident)
+
+    def peek(self, n):
+        """Non-consuming look ahead (the Wayseer's whole power)."""
+        return [dict(c) for c in self.script[self.cursor:self.cursor + n]]
 
     # ------------------------------------------------------- helpers
 
@@ -243,4 +247,4 @@ class WeimarMachine:
             return
         self._resolve_se(card, state)
 
-# ratios: loc_comments=156:64 imports_exports=4:4 calls_definitions=76:12
+# ratios: loc_comments=158:65 imports_exports=4:4 calls_definitions=77:13

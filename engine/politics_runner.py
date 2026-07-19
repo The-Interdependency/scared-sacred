@@ -1,4 +1,4 @@
-# ratios: loc_comments=171:99 imports_exports=2:8 calls_definitions=84:20
+# ratios: loc_comments=193:103 imports_exports=3:8 calls_definitions=95:20
 """politics_runner — turn-sequence runner for POLITICS (base game).
 
 The runner owns the ORDER of play and nothing else. All game truth lives
@@ -81,6 +81,10 @@ clock demo runs end to end. All balance numbers [conjectural].
 #   behavior: in hand mode, a play resolves only from the hand holding
 #     it; played and burned cards move to the discard pile; the turn ends
 #     with one draw while the pile lasts
+# id: runner_suspension_primitive
+#   behavior: while suspend_beats > 0 a machine beat consumes the
+#     suspension instead of a card: no card, no pmr, population unchanged
+#     (shared plumbing: filibuster now, the witness rule later)
 # id: runner_reaction_window
 #   behavior: after a machine card reveals and before its PMR, players
 #     may discard one card to reflex a reflex-flagged card into the beat;
@@ -106,6 +110,8 @@ class GameState:
     draw_pile: list = field(default_factory=list)
     hands: list = field(default_factory=list)
     discard_pile: list = field(default_factory=list)
+    tallies: dict = field(default_factory=dict)
+    suspend_beats: int = 0
 
 
 @dataclass
@@ -114,6 +120,7 @@ class TurnPlays:
     static: dict | None = None
     actions: list = field(default_factory=list)
     discards: int = 0
+    arcana: dict | None = None
 
 
 @dataclass
@@ -121,6 +128,7 @@ class MatchResult:
     outcome: str          # "loss" | "win"
     machine_beats: int
     state: GameState
+    agenda_outcomes: list = field(default_factory=list)
 
 
 # -------------------------------------------------------- stub modules
@@ -180,7 +188,8 @@ class MatchRunner:
     """Owns the sequence. Machine first; one machine beat per player turn."""
 
     def __init__(self, engine, machine, players, state, rules=None,
-                 hand_size=None):
+                 hand_size=None, arcana=None):
+        self.arcana = arcana
         self.engine = engine
         self.machine = machine
         self.players = players
@@ -235,6 +244,10 @@ class MatchRunner:
         return extra_r, countered
 
     def _machine_beat(self):
+        if self.state.suspend_beats > 0:          # the world holds still
+            self.state.suspend_beats -= 1
+            self.state.log.append(("suspended_beat",))
+            return None
         card = self.machine.next_card(self.state)
         if card is None:
             return "deck_empty"
@@ -259,6 +272,9 @@ class MatchRunner:
         plays = self.players[pid].take_turn(self.state, pid)
         if hasattr(self.rules, "validate_turn"):
             plays = self.rules.validate_turn(self.state, plays)
+        if self.arcana and getattr(plays, "arcana", None):
+            self.arcana.apply(plays.arcana, self.state, self.machine,
+                              self.engine, pid, len(self.players))
         if self.hand_mode:
             if plays.static and not self._take_from_hand(pid, plays.static):
                 plays.static = None
@@ -270,7 +286,12 @@ class MatchRunner:
             self.state.log.append(("static", pid, plays.static.get("name")))
         for action in plays.actions:
             if self.rules.legal(self.state, action):
-                r_total += action.get("r", 0)
+                if hasattr(self.rules, "effective_r"):
+                    r_total += self.rules.effective_r(self.state, action)
+                else:
+                    r_total += action.get("r", 0)
+                n = self.state.tallies.get("played:" + action.get("name", ""), 0)
+                self.state.tallies["played:" + action.get("name", "")] = n + 1
                 self._targets.append(action.get("declared_target"))
                 self.state.log.append(("action", pid, action.get("name"),
                                        action.get("target")))
@@ -305,8 +326,13 @@ class MatchRunner:
                     break
             if halt is None:
                 self._rotation_boundary()
-        if halt == "deck_empty" and self.state.population > 50:
-            return MatchResult("win", self.state.machine_beats, self.state)
-        return MatchResult("loss", self.state.machine_beats, self.state)
+        outcome = "win" if (halt == "deck_empty"
+                            and self.state.population > 50) else "loss"
+        verdicts = []
+        if self.state.tallies.get("agendas"):
+            from arcana_agendas_v1 import verify_agendas
+            verdicts = verify_agendas(self.state, outcome)
+        return MatchResult(outcome, self.state.machine_beats, self.state,
+                           verdicts)
 
-# ratios: loc_comments=171:99 imports_exports=2:8 calls_definitions=84:20
+# ratios: loc_comments=193:103 imports_exports=3:8 calls_definitions=95:20
