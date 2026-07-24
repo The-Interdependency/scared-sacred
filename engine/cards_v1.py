@@ -1,4 +1,4 @@
-# ratios: loc_comments=158:65 imports_exports=4:4 calls_definitions=77:13
+# ratios: loc_comments=160:65 imports_exports=4:4 calls_definitions=80:13
 """cards_v1 — secret effects, interaction links, the M15 hinge, deck law.
 
 WeimarMachine plays the scripted set with its mechanics live: SE gating
@@ -67,8 +67,9 @@ def build_response_pile(seed=53):
     import random
     from weimar_data import RESPONSE_DECK
     pile = []
-    for c in RESPONSE_DECK:
-        pile += [dict(c) for _ in range(c.get("copies", 1))]
+    for i, c in enumerate(RESPONSE_DECK):
+        pile += [dict(c, art_id=f"r{i+1:02d}")
+                 for _ in range(c.get("copies", 1))]
     random.Random(seed).shuffle(pile)
     return pile
 
@@ -232,6 +233,7 @@ class WeimarMachine:
                 state.in_play_statics.append(st)
                 if "event_buff" in card["static"]:
                     self.event_buff += card["static"]["event_buff"]
+            state.log.append(("machine_id", card["id"]))
             return {"name": card["name"], "id": card["id"], "s": s,
                     "has_se": bool(card.get("se"))}
         return None
@@ -247,4 +249,4 @@ class WeimarMachine:
             return
         self._resolve_se(card, state)
 
-# ratios: loc_comments=158:65 imports_exports=4:4 calls_definitions=77:13
+# ratios: loc_comments=160:65 imports_exports=4:4 calls_definitions=80:13

@@ -1,4 +1,4 @@
-# ratios: loc_comments=68:91 imports_exports=2:1 calls_definitions=31:9
+# ratios: loc_comments=69:92 imports_exports=2:1 calls_definitions=32:9
 """rules_v1 — legality and pricing for POLITICS. Build step 3.
 
 The rules module answers exactly two questions and volunteers nothing:
@@ -147,10 +147,12 @@ class RulesV1:
 
     def interference(self, state, play):
         """Returns (strain, m_delta) a resolved play injects into the
-        commons. Player-targeted plays heat the pot; nothing else does."""
+        commons. Player-targeted plays heat the pot; m_bonus cards
+        (Wels) build it; nothing else moves it."""
+        s, dm = 0, play.get("m_bonus", 0)
         if play.get("target") == "player":
-            return play.get("a", 0), -1
-        return 0, 0
+            s, dm = play.get("a", 0), dm - 1
+        return s, dm
 
     def coalition(self, declared_targets):
         """One rotation of declared targets -> m delta."""
@@ -177,4 +179,4 @@ class RulesV1:
         prior = state.tallies.get("played:" + play.get("name", ""), 0)
         return max(0, play.get("r", 0) - prior // 2)
 
-# ratios: loc_comments=68:91 imports_exports=2:1 calls_definitions=31:9
+# ratios: loc_comments=69:92 imports_exports=2:1 calls_definitions=32:9

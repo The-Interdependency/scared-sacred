@@ -1,4 +1,4 @@
-# ratios: loc_comments=132:33 imports_exports=7:6 calls_definitions=43:17
+# ratios: loc_comments=129:33 imports_exports=7:6 calls_definitions=41:16
 """harness_v1 — batch playtest instrument. Build step 5a.
 
 Runs match batches across player policies and seeds; reports win rate,
@@ -49,11 +49,7 @@ def _card(name):
 
 
 class HarnessRules(RulesV1):
-    """RulesV1 plus the m_bonus wire (Wels) used across policies."""
-
-    def interference(self, state, play):
-        s, dm = super().interference(state, play)
-        return s, dm + play.get("m_bonus", 0)
+    """Alias retained for compatibility; m_bonus is rules canon now."""
 
 
 def _from_hand(state, pid, want_kind=None, names=None):
@@ -196,4 +192,4 @@ if __name__ == "__main__":
         print(f"{k:8s} win {v['win_rate']:.0%}  end-beat "
               f"{v['mean_end_beat']:.1f}  pop {v['mean_pop']:.0f}  "
               f"hinge-failed {v['hinge_fail_rate']:.0%}")
-# ratios: loc_comments=132:33 imports_exports=7:6 calls_definitions=43:17
+# ratios: loc_comments=129:33 imports_exports=7:6 calls_definitions=41:16
