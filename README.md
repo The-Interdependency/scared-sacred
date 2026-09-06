@@ -8,8 +8,10 @@ guarantees total conversion absent human play) / L3 TABLE (players; the
 only source of repair in the universe).
 
 - canon/     base canon v0.3 + Scared Sacred expansion canon v0.2
-- base-game/ play rules v0.3 (consolidated) + arcana v0.2
-- expansions/scared-sacred/  Expansion Set 1 (fundamentalism block)
+- base-game/ play rules v0.3, arcana v0.2, executable engine data, and sets/fifty-three-days/
+- expansions/scared-sacred/  Expansion Set 1 boundary; its distinctive expansion content remains separate from Fifty-Three Days
+- engine/    executable rules, Machine, inertial field, agendas/arcana, and balance harness
+- render/    playable browser table over the real engine
 - funding/   GoFundMe entry
 - .agents/skills/  vendored from skill-lib (if present)
 
@@ -18,6 +20,6 @@ VIRTUAL ONLY — no physical printing of any set, ever.
 The Litany (never satirical):
 I'm sorry. I forgive you. You are not alone. I love you.
 
-Status: pre-playtest. All balance numbers conjectural.
+Status: executable base ruleset and automated balance harness are implemented and test-backed; human playtest and store/mobile delivery remain pending. Some explicitly logged card effects remain unresolved and must not be represented as complete.
 
-hmmm — fear and the holy are the same six letters.
+hmmm — fear and the holy are the same six letters; the base game and its first expansion now also have separate addresses.
