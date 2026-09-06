@@ -1,4 +1,4 @@
-# ratios: loc_comments=160:65 imports_exports=4:4 calls_definitions=80:13
+# ratios: loc_comments=171:68 imports_exports=4:4 calls_definitions=85:14
 """cards_v1 — secret effects, interaction links, the M15 hinge, deck law.
 
 WeimarMachine plays the scripted set with its mechanics live: SE gating
@@ -44,6 +44,9 @@ unimplemented SEs. All numbers [conjectural].
 #     chain with delay_if_gated fires on the following beat instead
 # id: cards_se_doubles_at_low_m
 #   behavior: at m <= 1 stacking effects apply twice
+# id: cards_se_shield_consumed
+#   behavior: an active SE shield prevents one otherwise-resolving secret
+#     effect and is consumed exactly once, including delayed effects
 # id: cards_destruction_feeds_prereqs
 #   behavior: destroying a machine card or static causes every later
 #     card with that prereq to be skipped
@@ -129,6 +132,14 @@ class WeimarMachine:
                 if s["timed_beats"] <= 0:
                     s["timed_debuff"] = 0
 
+    def _consume_se_shield(self, state, card_id):
+        shield = state.tallies.get("se_shield", 0)
+        if shield <= 0:
+            return False
+        state.tallies["se_shield"] = shield - 1
+        state.log.append(("se_shielded", card_id))
+        return True
+
     def _apply_effect(self, se, state, card):
         kind = se.get("kind")
         if kind in NOOP_EFFECTS:
@@ -171,6 +182,8 @@ class WeimarMachine:
             return
         gate = se.get("a_se", 0)
         if state.e >= gate:
+            if self._consume_se_shield(state, card["id"]):
+                return
             times = 2 if (state.m <= 1 and se.get("kind") not in
                           {"chain"} | NOOP_EFFECTS) else 1
             for _ in range(times):
@@ -203,10 +216,12 @@ class WeimarMachine:
             for s in prey[:eaters]:
                 state.in_play_statics.remove(s)
                 state.log.append(("gleichgeschaltet", s.get("name")))
-        for se in self.delayed:
+        for se in list(self.delayed):
             if state.e >= se.get("a_se", 0):
-                self._apply_effect(se, state, {"id": se["card_id"]})
                 self.delayed.remove(se)
+                if self._consume_se_shield(state, se["card_id"]):
+                    continue
+                self._apply_effect(se, state, {"id": se["card_id"]})
         while self.cursor < len(self.script):
             card = self.script[self.cursor]
             self.cursor += 1
@@ -249,4 +264,4 @@ class WeimarMachine:
             return
         self._resolve_se(card, state)
 
-# ratios: loc_comments=160:65 imports_exports=4:4 calls_definitions=80:13
+# ratios: loc_comments=171:68 imports_exports=4:4 calls_definitions=85:14
