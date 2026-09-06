@@ -1,4 +1,4 @@
-# ratios: loc_comments=119:51 imports_exports=2:3 calls_definitions=45:5
+# ratios: loc_comments=130:54 imports_exports=2:4 calls_definitions=54:6
 """arcana_agendas_v1 — secret agendas and the nine trumps. Build step 5c.
 
 AGENDAS: dealt one per player at setup, secret, verified at match end.
@@ -11,11 +11,12 @@ per game, public and attributed. The Wayseer reveals; it never controls.
 
 Usage Guidance
 --------------
-    from arcana_agendas_v1 import (deal_agendas, verify_agendas,
-                                   ARCANA, ArcanaModule)
-    deal_agendas(state, players=3, rng)
+    from arcana_agendas_v1 import (deal_agendas, deal_arcana,
+                                   verify_agendas, ARCANA, ArcanaModule)
+    deal_agendas(state, players=3, rng=rng)
+    deal_arcana(state, players=3, rng=rng)
     runner = MatchRunner(..., arcana=ArcanaModule())
-    plays = TurnPlays(arcana={"name": "THE WAYSEER"})   # from your deal
+    plays = TurnPlays(arcana=state.tallies["arcana"][pid])
     result.agenda_outcomes  # per-player verdicts at match end
 Filibuster and the Witness Rule share the suspension primitive
 (GameState.suspend_beats): the world stopping is sequence-level plumbing,
@@ -24,12 +25,13 @@ built once. All numbers [conjectural].
 # === MODULE_BUILD ===
 # id: arcana_agendas_v1
 #   purpose: non-alignment (secret agendas) and rule-class trumps
-#   surfaces: AGENDAS, deal_agendas, verify_agendas, ARCANA, ArcanaModule
+#   surfaces: AGENDAS, deal_agendas, deal_arcana, verify_agendas, ARCANA,
+#     ArcanaModule
 #   boundaries: no sequence (runner hooks), no field math (engine);
 #     arcana effects mutate state through declared primitives only
 #   tests: test_arcana_agendas.py
 #   rollout: step 5c; completes the ruleset
-#   rollback: omit arcana= param; skip deal_agendas
+#   rollback: omit arcana= param; skip deal_agendas/deal_arcana
 #   hmmm: FIRST-TIME VOTER's blind-draw-as-R deferred (SE shield only);
 #     AUDIT compatibility is a coarse bool pending richer agenda algebra
 # === END MODULE_BUILD ===
@@ -39,8 +41,9 @@ built once. All numbers [conjectural].
 #   behavior: every dealt agenda is verified at match end against state
 #     and log; ashes-mode verifies on loss as well as win
 # id: agendas_organizer_counts_r
-#   behavior: the organizer agenda holds only for the player with the
-#     strictly greatest attributed r tally
+#   behavior: organizer uses resolved attributed R, not action count
+# id: arcana_dealt_ownership
+#   behavior: a player may resolve only the arcanum dealt to that seat
 # id: arcana_once_per_game
 #   behavior: a player's second arcanum play never resolves
 # id: arcana_wayseer_reveals
@@ -84,7 +87,8 @@ def verify_agendas(state, outcome):
     laid_by_pid = {}
     for ev in state.log:
         if ev[0] == "action":
-            r_by_pid[ev[1]] = r_by_pid.get(ev[1], 0) + 1
+            resolved_r = ev[4] if len(ev) > 4 else 0
+            r_by_pid[ev[1]] = r_by_pid.get(ev[1], 0) + resolved_r
             plays_by_pid.setdefault(ev[1], []).append(ev[2])
         if ev[0] == "static":
             laid_by_pid.setdefault(ev[1], []).append(ev[2])
@@ -126,16 +130,28 @@ ARCANA = [
 ]
 
 
+def deal_arcana(state, players, rng):
+    pool = list(ARCANA)
+    rng.shuffle(pool)
+    state.tallies["arcana"] = [dict(pool[i % len(pool)])
+                               for i in range(players)]
+
+
 class ArcanaModule:
-    """Applies trumps. Public, attributed, once per player per game."""
+    """Applies trumps. Public, attributed, dealt one per seat, once per game."""
 
     def __init__(self):
         self.used = set()
 
     def apply(self, arcanum, state, machine, engine, pid, players):
         name = arcanum.get("name")
+        dealt = state.tallies.get("arcana")
+        if dealt:
+            if pid >= len(dealt) or dealt[pid].get("name") != name:
+                state.log.append(("arcana_refused", pid, name, "not_dealt"))
+                return
         if pid in self.used:
-            state.log.append(("arcana_refused", pid, name))
+            state.log.append(("arcana_refused", pid, name, "already_used"))
             return
         self.used.add(pid)
         state.log.append(("arcana", pid, name))
@@ -187,4 +203,4 @@ class ArcanaModule:
                                                else -incompat)))
             state.log.append(("audit", [a["name"] for a in ag]))
 
-# ratios: loc_comments=119:51 imports_exports=2:3 calls_definitions=45:5
+# ratios: loc_comments=130:54 imports_exports=2:4 calls_definitions=54:6
