@@ -1,4 +1,4 @@
-# ratios: loc_comments=193:103 imports_exports=3:8 calls_definitions=95:20
+# ratios: loc_comments=203:108 imports_exports=3:8 calls_definitions=101:20
 """politics_runner — turn-sequence runner for POLITICS (base game).
 
 The runner owns the ORDER of play and nothing else. All game truth lives
@@ -30,7 +30,9 @@ Run the null-clock calibration (no player ever plays):
     print(result.outcome, result.machine_beats, result.state.population)
 
 Swap NullPlayer for any object with take_turn(state, pid) -> TurnPlays to
-seat a human UI, an a0 agent, or an older-model playtester. Swap
+seat a human UI, an a0 agent, or an older-model playtester. In hand mode,
+discard_cards must contain the actual cards being burned; an integer
+discard claim without cards does not buy tempo or reach. Swap
 ScriptedMachine for a policy machine in later sets; Weimar ships scripted.
 Integration: this module is build-order step 1; the engine here is the
 step-2 stub already carrying the real leaky-integrator math so the null
@@ -81,6 +83,9 @@ clock demo runs end to end. All balance numbers [conjectural].
 #   behavior: in hand mode, a play resolves only from the hand holding
 #     it; played and burned cards move to the discard pile; the turn ends
 #     with one draw while the pile lasts
+# id: runner_attributed_r_log
+#   behavior: every resolved action log records the actual R contributed
+#     after habituation so agenda accounting can consume evidence
 # id: runner_suspension_primitive
 #   behavior: while suspend_beats > 0 a machine beat consumes the
 #     suspension instead of a card: no card, no pmr, population unchanged
@@ -120,6 +125,7 @@ class TurnPlays:
     static: dict | None = None
     actions: list = field(default_factory=list)
     discards: int = 0
+    discard_cards: list = field(default_factory=list)
     arcana: dict | None = None
 
 
@@ -270,6 +276,14 @@ class MatchRunner:
 
     def _player_beat(self, pid):
         plays = self.players[pid].take_turn(self.state, pid)
+        if self.hand_mode:
+            paid = []
+            for card in list(getattr(plays, "discard_cards", [])):
+                if self._take_from_hand(pid, card):
+                    paid.append(card)
+                    self.state.log.append(("discard", pid, card.get("name")))
+            plays.discard_cards = paid
+            plays.discards = len(paid)
         if hasattr(self.rules, "validate_turn"):
             plays = self.rules.validate_turn(self.state, plays)
         if self.arcana and getattr(plays, "arcana", None):
@@ -287,14 +301,15 @@ class MatchRunner:
         for action in plays.actions:
             if self.rules.legal(self.state, action):
                 if hasattr(self.rules, "effective_r"):
-                    r_total += self.rules.effective_r(self.state, action)
+                    resolved_r = self.rules.effective_r(self.state, action)
                 else:
-                    r_total += action.get("r", 0)
+                    resolved_r = action.get("r", 0)
+                r_total += resolved_r
                 n = self.state.tallies.get("played:" + action.get("name", ""), 0)
                 self.state.tallies["played:" + action.get("name", "")] = n + 1
                 self._targets.append(action.get("declared_target"))
                 self.state.log.append(("action", pid, action.get("name"),
-                                       action.get("target")))
+                                       action.get("target"), resolved_r))
                 if hasattr(self.rules, "interference"):
                     ds, dm = self.rules.interference(self.state, action)
                     s_extra += ds
@@ -335,4 +350,4 @@ class MatchRunner:
         return MatchResult(outcome, self.state.machine_beats, self.state,
                            verdicts)
 
-# ratios: loc_comments=193:103 imports_exports=3:8 calls_definitions=95:20
+# ratios: loc_comments=203:108 imports_exports=3:8 calls_definitions=101:20

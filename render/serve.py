@@ -1,10 +1,11 @@
-# ratios: loc_comments=206:51 imports_exports=15:4 calls_definitions=97:15
+# ratios: loc_comments=298:61 imports_exports=15:6 calls_definitions=133:17
 """serve — the table. Top-down playable board for POLITICS, stdlib only.
 
 Layout per Erin's spec: the population at center (the inertial vector
 field drawn live — every person a dot, leaning as they lean), the card
 field ringed around it, machine and player avatars around that, your
-hand along the bottom. Real card art from expansions/.../cards/.
+hand along the bottom. Fifty-Three Days art is loaded from the base-game
+set namespace.
 
 No tips, no tricks: the interface enforces legality by refusal and
 states what you MAY do, never what you should. The tutorial is the game
@@ -15,33 +16,39 @@ Usage Guidance
 --------------
     cd <repo-root> && python3 render/serve.py        # port 5300
     # phone browser -> http://localhost:5300
-Solo seat + two null co-seats by default (POLITICS_SEATS=3 to change).
+Solo seat + two noisy co-seats by default (POLITICS_SEATS=3 to change).
 Match: Fifty-Three Days, hand of 5, full mechanics. Refresh-safe: state
-lives server-side; the page polls. Ctrl-C ends the republic early.
+lives server-side; the page polls. Human reflex windows and the dealt
+arcanum are playable from the browser. Ctrl-C ends the republic early.
 
 # === MODULE_BUILD ===
 # id: render_serve_v01
 #   purpose: playable top-down table over the real engine; art live
 #   surfaces: HTTP / (board), /state, /act, /react; HumanSeat
 #   boundaries: no game logic (engine/rules own truth); no advice;
-#     blocking human input via queue, match on a worker thread
-#   tests: test_serve.py (state contract; no browser needed)
+#     blocking human input via queues, match on a worker thread
+#   tests: test_serve.py (state and request contracts; no browser needed)
 #   rollout: first sit-down vehicle; tutorial == this, per ruling 6
 #   rollback: delete render/; engine untouched
-#   hmmm: reaction-window UI is prompt-only v1; multiplayer seats wait
-#     on matchmaking phase; agenda card shown, arcana button minimal
+#   hmmm: multiplayer seats wait on matchmaking phase; richer targeting
+#     waits on a real multiplayer table rather than being guessed here
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
 # id: serve_state_reports_truth
-#   behavior: /state returns tracks, board, hand, awaiting flag, and log
-#     tail straight from the live GameState, nothing derived or advised
+#   behavior: /state returns tracks, board, hand, identity, reaction,
+#     awaiting flag, and log tail straight from live state
 # id: serve_act_enforces_hand_law
-#   behavior: /act with a card index outside the hand is refused without
-#     explanation
+#   behavior: invalid card/burn indexes are refused; valid burns are
+#     passed as actual card objects for runner hand-law enforcement
+# id: serve_reaction_window
+#   behavior: when a legal human reflex exists, the worker pauses until
+#     the player chooses a legal reflex+burn pair or explicitly passes
+# id: serve_arcana_playable
+#   behavior: the human seat sees and may play only its dealt arcanum
 # id: serve_match_thread_completes
-#   behavior: with null input the worker thread ends the match on the
-#     null clock
+#   behavior: with null human input/reactions the worker ends the match
+#     on the null clock
 # === END CONTRACTS ===
 """
 
@@ -57,18 +64,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "engine"))
 import politics_runner as pr                    # noqa: E402
 import weimar_data as wd                        # noqa: E402
 from harness_v1 import NoisyCoopPlayer          # noqa: E402
-from arcana_agendas_v1 import ArcanaModule, deal_agendas   # noqa: E402
+from arcana_agendas_v1 import (ArcanaModule, deal_agendas, deal_arcana)  # noqa: E402
 from cards_v1 import WeimarMachine, build_response_pile    # noqa: E402
 from inertial_engine import InertialEngine, weimar_seed    # noqa: E402
 from rules_v1 import RulesV1                    # noqa: E402
 
 
 class HumanSeat:
-    """Blocks the match thread until the browser posts a turn."""
+    """Blocks the match thread only when the human actually has a choice."""
 
-    def __init__(self):
+    def __init__(self, rules):
+        self.rules = rules
         self.inbox = queue.Queue()
+        self.reaction_inbox = queue.Queue()
         self.awaiting = False
+        self.reaction = None
 
     def take_turn(self, state, pid):
         self.awaiting = True
@@ -77,17 +87,39 @@ class HumanSeat:
         return plays
 
     def react(self, state, pid, mcard):
-        return None                              # v1: no human reflex UI
+        hand = state.hands[pid] if state.hands else []
+        candidates = [i for i, card in enumerate(hand)
+                      if card.get("reflex")
+                      and self.rules.reflex_legal(state, card, mcard)]
+        candidates = [i for i in candidates
+                      if any(j != i for j in range(len(hand)))]
+        if not candidates:
+            return None
+        self.reaction = {"incoming": dict(mcard), "candidates": candidates}
+        choice = self.reaction_inbox.get()
+        reaction = self.reaction
+        self.reaction = None
+        if choice is None:
+            return None
+        card_i, burn_i = choice
+        if (card_i not in reaction["candidates"] or
+                burn_i == card_i or
+                not (0 <= burn_i < len(hand))):
+            return None
+        return hand[card_i], hand[burn_i]
 
 
 class Table:
     def __init__(self, seats=3, seed=53):
-        self.human = HumanSeat()
+        self.rules = RulesV1()
+        self.human = HumanSeat(self.rules)
         st = pr.GameState(**wd.WEIMAR_OPENING)
         st.in_play_statics.extend(dict(s) for s in wd.SETUP_STATICS)
         st.draw_pile = build_response_pile(seed)
         import random
-        deal_agendas(st, seats, random.Random(seed))
+        rng = random.Random(seed)
+        deal_agendas(st, seats, rng)
+        deal_arcana(st, seats, rng)
         self.state = st
         self.engine = InertialEngine(weimar_seed(100, seed))
         import random as _rnd
@@ -101,7 +133,7 @@ class Table:
         self.runner = pr.MatchRunner(
             self.engine, WeimarMachine(wd.MACHINE_SCRIPT,
                                        reserve=wd.RESERVE_PILE),
-            players, st, rules=RulesV1(), hand_size=5,
+            players, st, rules=self.rules, hand_size=5,
             arcana=ArcanaModule())
         self.result = None
         self.thread = threading.Thread(target=self._run, daemon=True)
@@ -113,6 +145,7 @@ class Table:
     def snapshot(self):
         st = self.state
         hand = st.hands[0] if st.hands else []
+        arcana = (st.tallies.get("arcana") or [{}])[0]
         return {
             "tracks": {"population": st.population, "e": round(st.e, 2),
                        "m": st.m, "beat": st.machine_beats},
@@ -129,12 +162,69 @@ class Table:
                              if e2[0] == "machine_id"), None)}
                 for ev in reversed(st.log) if ev[0] == "machine"), None),
             "agenda": (st.tallies.get("agendas") or [{}])[0],
+            "arcana": arcana,
+            "arcana_used": 0 in self.runner.arcana.used,
             "awaiting": self.human.awaiting,
-            "log": [list(map(str, ev)) for ev in st.log[-8:]],
+            "reaction": self.human.reaction,
+            "log": [list(map(str, ev)) for ev in st.log[-10:]],
             "done": None if self.result is None else {
                 "outcome": self.result.outcome,
                 "agendas": self.result.agenda_outcomes},
         }
+
+
+def turn_from_request(table, req):
+    """Translate browser indexes into owned card objects; reject bad identity."""
+    hand = table.state.hands[0] if table.state.hands else []
+    kind = req.get("kind")
+    idx = req.get("card")
+    if kind in {"static", "action"}:
+        if not isinstance(idx, int) or not 0 <= idx < len(hand):
+            return None
+        card = hand[idx]
+    else:
+        card = None
+    burn_indexes = req.get("burns", [])
+    if not isinstance(burn_indexes, list):
+        return None
+    if len(set(burn_indexes)) != len(burn_indexes):
+        return None
+    if any(not isinstance(i, int) or not 0 <= i < len(hand)
+           for i in burn_indexes):
+        return None
+    if idx in burn_indexes:
+        return None
+    burns = [hand[i] for i in burn_indexes]
+    plays = pr.TurnPlays(discard_cards=burns)
+    if kind == "static":
+        card["side"] = "player"
+        plays.static = card
+    elif kind == "action":
+        card["declared_target"] = "shared"
+        plays.actions = [card]
+    elif kind == "arcana":
+        dealt = table.state.tallies.get("arcana") or []
+        if not dealt:
+            return None
+        plays.arcana = dealt[0]
+    elif kind != "pass":
+        return None
+    return plays
+
+
+def reaction_from_request(table, req):
+    """Return a validated (reflex-index, burn-index) pair or explicit pass."""
+    pending = table.human.reaction
+    if pending is None:
+        return False, None
+    if req.get("pass"):
+        return True, None
+    card_i, burn_i = req.get("card"), req.get("burn")
+    hand = table.state.hands[0] if table.state.hands else []
+    valid = (isinstance(card_i, int) and isinstance(burn_i, int)
+             and card_i in pending["candidates"] and burn_i != card_i
+             and 0 <= burn_i < len(hand))
+    return (True, (card_i, burn_i)) if valid else (False, None)
 
 
 TABLE = None
@@ -151,50 +241,55 @@ canvas{width:100%;height:100%}
 #hand{display:flex;gap:6px;overflow-x:auto;padding:6px 0}
 .card{min-width:100px;border:1px solid #666;border-radius:4px;text-align:center;font-size:10px;background:#181818}
 .card img{width:100px;display:block;border-radius:3px 3px 0 0}
-.card.sel{outline:2px solid #fc3}
-.card.burn{outline:2px dashed #c66}
-#ctl button{font-size:14px;margin:4px 4px 0 0;padding:7px 10px;background:#222;color:#eee;border:1px solid #666;border-radius:4px}
-#agenda{font-size:11px;color:#fc9;padding:2px}
+.card.sel{outline:2px solid #fc3}.card.burn{outline:2px dashed #c66}
+.card.rx{border-color:#fc3}
+#ctl button,#reaction button{font-size:14px;margin:4px 4px 0 0;padding:7px 10px;background:#222;color:#eee;border:1px solid #666;border-radius:4px}
+#identity{font-size:11px;color:#fc9;padding:2px}
+#reaction{font-size:12px;color:#fc3;padding:4px 0}
 #log{font-size:10px;color:#888;white-space:pre-wrap;padding-top:6px}
 #done{font-size:14px;color:#fc3;padding:8px;white-space:pre-wrap}</style>
 <div id=tracks></div>
 <div id=arena><canvas id=cv></canvas><div id=reveal hidden></div></div>
-<div id=agenda></div><div id=board></div><div id=hand></div>
+<div id=identity></div><div id=reaction></div><div id=board></div><div id=hand></div>
 <div id=ctl><button onclick="submit('static')">LAY STATIC</button>
 <button onclick="submit('action')">PLAY ACTION</button>
 <button onclick="mark()">MARK DISCARD</button>
-<button onclick="submit('pass')">DRAW / END TURN</button></div>
+<button onclick="submit('arcana')">PLAY ARCANUM</button>
+<button onclick="submit('pass')">DRAW / END TURN</button>
+<button onclick="reactNow(false)">REFLEX</button>
+<button onclick="reactNow(true)">PASS REACTION</button></div>
 <div id=done></div><div id=log></div>
 <script>
-let sel=null, burns=[];
-async function tick(){try{const s=await (await fetch('/state')).json();render(s)}catch(e){}setTimeout(tick,900)}
+let sel=null,burns=[],latest=null;
+async function tick(){try{latest=await (await fetch('/state')).json();render(latest)}catch(e){}setTimeout(tick,900)}
 function render(s){
- tracks.innerHTML=`POP ${s.tracks.population} | E ${s.tracks.e} | M ${s.tracks.m} | BEAT ${s.tracks.beat}/40`+(s.awaiting?' | <b style="color:#fc3">YOUR TURN</b>':' | <span style="color:#a33">HISTORY MOVES</span>');
+ const reacting=!!s.reaction;
+ tracks.innerHTML=`POP ${s.tracks.population} | E ${s.tracks.e} | M ${s.tracks.m} | BEAT ${s.tracks.beat}/40`+
+ (reacting?' | <b style="color:#fc3">REACTION WINDOW</b>':(s.awaiting?' | <b style="color:#fc3">YOUR TURN</b>':' | <span style="color:#a33">HISTORY MOVES</span>'));
  const c=cv.getContext('2d');cv.width=cv.clientWidth;cv.height=cv.clientHeight;
  c.fillStyle='#161616';c.fillRect(0,0,cv.width,cv.height);
  const cx=cv.width/2,cy=cv.height/2,R=Math.min(cx,cy);
- // ring 1: the population, center disk — every person a dot, leaning as they lean
  s.field.forEach((p,i)=>{const a=(i*2.399963),r=R*0.44*Math.sqrt((i+0.5)/s.field.length);
   const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;
   c.fillStyle=p.c?'#a33':(p.x>0.5?'#c96':(p.x<-0.3?'#69c':'#999'));
   c.beginPath();c.arc(x,y,2.6,0,7);c.fill();});
- // ring 2: the card field — statics orbit the population
- const bs=s.board;bs.forEach((b,i)=>{const a=-1.5708+i/bs.length*6.2832;
+ const bs=s.board;bs.forEach((b,i)=>{const a=-1.5708+i/Math.max(1,bs.length)*6.2832;
   const x=cx+Math.cos(a)*R*0.68,y=cy+Math.sin(a)*R*0.68;
-  c.fillStyle=b.side=='machine'?'#a33':'#36a';
-  c.beginPath();c.arc(x,y,5,0,7);c.fill();});
- // ring 3: avatars — the machine above, the seats below
+  c.fillStyle=b.side=='machine'?'#a33':'#36a';c.beginPath();c.arc(x,y,5,0,7);c.fill();});
  c.fillStyle='#a33';c.fillRect(cx-14,8,28,10);
  c.fillStyle='#888';c.font='9px monospace';c.fillText('THE MACHINE',cx-32,30);
  ['YOU','ALLY','ALLY'].forEach((n,i)=>{c.fillStyle=i?'#557':'#36a';
   const x=cx+(i-1)*70;c.fillRect(x-12,cv.height-18,24,10);
   c.fillStyle='#888';c.fillText(n,x-10,cv.height-22);});
  board.innerHTML=bs.map(b=>`<span class="st ${b.side=='machine'?'mach':'ply'}">${b.name}${b.ps?' S'+b.ps:''}${b.pr?' R'+b.pr:''}</span>`).join('');
- agenda.textContent='your agenda: '+(s.agenda.name||'?');
- if(s.reveal&&s.reveal.id){reveal.hidden=false;reveal.innerHTML=`<img src="/art/${s.reveal.id.toLowerCase()}.png" onerror="this.hidden=true">${s.reveal.name}<br>S${s.reveal.s}`}
- hand.innerHTML=s.hand.map((h,i)=>`<div class="card ${sel==i?'sel':''} ${burns.includes(i)?'burn':''}" onclick="sel=${i}">
+ identity.textContent='agenda: '+(s.agenda.name||'?')+' | arcanum: '+(s.arcana.name||'?')+(s.arcana_used?' [USED]':'');
+ reaction.innerHTML=reacting?`Incoming ${s.reaction.incoming.id}: select a highlighted reflex, mark one other card, then REFLEX — or PASS REACTION.`:'';
+ if(s.reveal&&s.reveal.id){reveal.hidden=false;reveal.innerHTML=`<img src="/art/${s.reveal.id.toLowerCase()}.png" onerror="this.hidden=true">${s.reveal.name}<br>S${s.reveal.s}`}else{reveal.hidden=true}
+ const rxs=reacting?s.reaction.candidates:[];
+ hand.innerHTML=s.hand.map((h,i)=>`<div class="card ${sel==i?'sel':''} ${burns.includes(i)?'burn':''} ${rxs.includes(i)?'rx':''}" data-i="${i}">
   <img src="/art/${(h.art_id||h.id||'x').toLowerCase()}.png" onerror="this.style.display='none'">
-  ${h.name}<br>${h.kind} A${h.a||0}${h.r?' R'+h.r:''}${h.passive_r?' pR'+h.passive_r:''}</div>`).join('');
+  ${h.name}<br>${h.kind||''} A${h.a||0}${h.r?' R'+h.r:''}${h.passive_r?' pR'+h.passive_r:''}</div>`).join('');
+ hand.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>{sel=Number(el.dataset.i);render(s)}));
  if(s.done){done.textContent=verdict(s.done)}
  log.textContent=s.log.map(l=>l.join(' ')).join('\n');}
 function verdict(d){
@@ -202,9 +297,18 @@ function verdict(d){
  (d.agendas||[]).forEach(a=>{const who=a.pid==0?'You':'Seat '+a.pid;
   out+=`${who} (${a.agenda}): agenda ${a.held?'HELD':'failed'}${a.held&&d.outcome=='loss'?' — won in the ashes':''}\n`});
  return out}
-function mark(){if(sel!=null){burns.push(sel);sel=null}}
-async function submit(kind){await fetch('/act',{method:'POST',headers:{'content-type':'application/json'},
- body:JSON.stringify({kind:kind,card:sel,burns:burns})});sel=null;burns=[]}
+function mark(){if(sel!=null&&!burns.includes(sel)){burns.push(sel);sel=null;if(latest)render(latest)}}
+async function submit(kind){
+ if(!latest||latest.reaction)return;
+ const r=await fetch('/act',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({kind:kind,card:sel,burns:burns})});
+ if(r.ok){sel=null;burns=[]}}
+async function reactNow(passRx){
+ if(!latest||!latest.reaction)return;
+ const burn=burns.length?burns[0]:null;
+ const r=await fetch('/react',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify(passRx?{pass:true}:{card:sel,burn:burn})});
+ if(r.ok){sel=null;burns=[]}}
 tick();
 </script>"""
 
@@ -237,41 +341,43 @@ class H(BaseHTTPRequestHandler):
         ident = ident.replace(".png", "").lower()
         if not ident.replace("-", "").isalnum():
             self.send_response(404); self.end_headers(); return
-        base = os.path.join(os.path.dirname(__file__), "..", "expansions",
-                            "scared-sacred", "cards")
-        for deck in ("response", "machine", "setup", "reserve"):
+        base = os.path.join(os.path.dirname(__file__), "..", "base-game",
+                            "sets", "fifty-three-days", "cards")
+        for deck in ("response", "machine", "setup", "reserve", "arcana",
+                     "agendas"):
             png = os.path.join(base, deck, ident + ".png")
             if os.path.exists(png):
                 self.send_response(200)
                 self.send_header("content-type", "image/png")
                 self.end_headers()
-                self.wfile.write(open(png, "rb").read())
+                with open(png, "rb") as fh:
+                    self.wfile.write(fh.read())
                 return
         self.send_response(404); self.end_headers()
 
     def do_POST(self):
-        if self.path != "/act":
-            self.send_response(404); self.end_headers(); return
         n = int(self.headers.get("content-length", 0))
         req = json.loads(self.rfile.read(n) or "{}")
-        hand = TABLE.state.hands[0] if TABLE.state.hands else []
-        idx = req.get("card")
-        card = hand[idx] if isinstance(idx, int) and 0 <= idx < len(hand) \
-            else None
-        burns = [hand[b] for b in req.get("burns", [])
-                 if isinstance(b, int) and 0 <= b < len(hand)]
-        plays = pr.TurnPlays(discards=len(burns))
-        if req.get("kind") == "static" and card is not None:
-            card["side"] = "player"
-            plays.static = card
-        elif req.get("kind") == "action" and card is not None:
-            card["declared_target"] = "shared"
-            plays.actions = [card]
-        if TABLE.human.awaiting:
+        if self.path == "/act":
+            if not TABLE.human.awaiting or TABLE.human.reaction is not None:
+                self._json({"ok": False}, 409)
+                return
+            plays = turn_from_request(TABLE, req)
+            if plays is None:
+                self._json({"ok": False}, 400)
+                return
             TABLE.human.inbox.put(plays)
             self._json({"ok": True})
-        else:
-            self._json({"ok": False}, 409)       # not your beat; no explanation
+            return
+        if self.path == "/react":
+            ok, choice = reaction_from_request(TABLE, req)
+            if not ok:
+                self._json({"ok": False}, 400 if TABLE.human.reaction else 409)
+                return
+            TABLE.human.reaction_inbox.put(choice)
+            self._json({"ok": True})
+            return
+        self.send_response(404); self.end_headers()
 
 
 def main():
@@ -285,4 +391,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=206:51 imports_exports=15:4 calls_definitions=97:15
+# ratios: loc_comments=298:61 imports_exports=15:6 calls_definitions=133:17

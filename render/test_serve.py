@@ -1,11 +1,13 @@
-# ratios: loc_comments=34:11 imports_exports=4:1 calls_definitions=21:4
+# ratios: loc_comments=59:12 imports_exports=4:1 calls_definitions=34:5
 """Checks for the table server (no browser required).
 
 # === CHECKS ===
 # id: check_state_reports_truth
-#   witnesses: serve_state_reports_truth
+#   witnesses: serve_state_reports_truth, serve_arcana_playable
 # id: check_act_enforces_hand_law
 #   witnesses: serve_act_enforces_hand_law
+# id: check_reaction_request_validation
+#   witnesses: serve_reaction_window
 # id: check_match_thread_completes
 #   witnesses: serve_match_thread_completes
 # === END CHECKS ===
@@ -25,23 +27,48 @@ class Checks(unittest.TestCase):
         s = t.snapshot()
         self.assertEqual(len(s["field"]), 100)
         self.assertIn("population", s["tracks"])
-        self.assertTrue(s["awaiting"])           # human seat blocks beat one
         self.assertEqual(len(s["hand"]), 5)
-        t.human.inbox.put(pr.TurnPlays())        # release the thread
+        self.assertTrue(s["arcana"].get("name"))
+        self.assertIn("reaction", s)
+        if t.human.reaction is not None:
+            t.human.reaction_inbox.put(None)
+        if t.human.awaiting:
+            t.human.inbox.put(pr.TurnPlays())
 
     def test_check_act_enforces_hand_law(self):
-        t = serve.Table(seats=2)
-        time.sleep(0.1)
-        hand_before = list(t.state.hands[0])
-        # out-of-range index -> pass turn, nothing leaves the hand
-        t.human.inbox.put(pr.TurnPlays())
-        time.sleep(0.1)
-        self.assertTrue(all(c in t.state.hands[0] or True
-                            for c in hand_before))
+        fake = type("FakeTable", (), {})()
+        fake.state = pr.GameState(
+            hands=[[{"name": "A"}, {"name": "B"}, {"name": "C"}]],
+            tallies={"arcana": [{"name": "THE WAYSEER"}]})
+        self.assertIsNone(serve.turn_from_request(
+            fake, {"kind": "action", "card": 99, "burns": []}))
+        self.assertIsNone(serve.turn_from_request(
+            fake, {"kind": "action", "card": 0, "burns": [0]}))
+        turn = serve.turn_from_request(
+            fake, {"kind": "action", "card": 0, "burns": [1]})
+        self.assertIs(turn.actions[0], fake.state.hands[0][0])
+        self.assertEqual(turn.discard_cards, [fake.state.hands[0][1]])
+
+    def test_check_reaction_request_validation(self):
+        fake = type("FakeTable", (), {})()
+        fake.state = pr.GameState(hands=[[{"name": "RX"}, {"name": "BURN"}]])
+        fake.human = type("FakeHuman", (), {})()
+        fake.human.reaction = {"incoming": {"id": "M15"}, "candidates": [0]}
+        self.assertEqual(
+            serve.reaction_from_request(fake, {"card": 0, "burn": 1}),
+            (True, (0, 1)))
+        self.assertEqual(
+            serve.reaction_from_request(fake, {"card": 0, "burn": 0}),
+            (False, None))
+        self.assertEqual(
+            serve.reaction_from_request(fake, {"pass": True}),
+            (True, None))
 
     def test_check_match_thread_completes(self):
         t = serve.Table(seats=2)
-        for _ in range(200):
+        for _ in range(400):
+            if t.human.reaction is not None:
+                t.human.reaction_inbox.put(None)
             if t.human.awaiting:
                 t.human.inbox.put(pr.TurnPlays())
             if t.result is not None:
@@ -53,4 +80,4 @@ class Checks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=34:11 imports_exports=4:1 calls_definitions=21:4
+# ratios: loc_comments=59:12 imports_exports=4:1 calls_definitions=34:5

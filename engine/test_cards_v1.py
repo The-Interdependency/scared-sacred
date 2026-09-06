@@ -1,4 +1,4 @@
-# ratios: loc_comments=83:18 imports_exports=6:2 calls_definitions=54:9
+# ratios: loc_comments=97:20 imports_exports=6:2 calls_definitions=62:10
 """Checks for cards_v1 + weimar_data. Run: python3 test_cards_v1.py
 
 # === CHECKS ===
@@ -8,6 +8,8 @@
 #   witnesses: cards_se_gated_by_e
 # id: check_se_doubles_at_low_m
 #   witnesses: cards_se_doubles_at_low_m
+# id: check_se_shield_consumed
+#   witnesses: cards_se_shield_consumed
 # id: check_destruction_feeds_prereqs
 #   witnesses: cards_destruction_feeds_prereqs
 # id: check_courts_flip
@@ -69,6 +71,21 @@ class Checks(unittest.TestCase):
                        if s.get("name") == "THE PULPITS"][0]
             self.assertEqual(pulpits["perm_debuff"], expect)
 
+    def test_check_se_shield_consumed(self):
+        card = {"id": "T", "name": "T", "s": 0,
+                "se": {"a_se": 0, "kind": "perm_debuff",
+                       "target": "THE PULPITS", "amount": 1}}
+        m = WeimarMachine([card])
+        st = opening()
+        st.tallies["se_shield"] = 1
+        st.in_play_statics.append({"name": "THE PULPITS", "passive_r": 1})
+        m.resolve_se(m.next_card(st), st)
+        pulpits = [s for s in st.in_play_statics
+                   if s.get("name") == "THE PULPITS"][0]
+        self.assertEqual(pulpits.get("perm_debuff", 0), 0)
+        self.assertEqual(st.tallies["se_shield"], 0)
+        self.assertIn(("se_shielded", "T"), st.log)
+
     def test_check_destruction_feeds_prereqs(self):
         m = WeimarMachine(wd.MACHINE_SCRIPT)
         m.destroy("M35")                                 # Marburg never spoken
@@ -115,4 +132,4 @@ class Checks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=83:18 imports_exports=6:2 calls_definitions=54:9
+# ratios: loc_comments=97:20 imports_exports=6:2 calls_definitions=62:10
