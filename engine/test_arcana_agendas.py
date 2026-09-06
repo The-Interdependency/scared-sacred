@@ -1,11 +1,13 @@
-# ratios: loc_comments=94:21 imports_exports=8:2 calls_definitions=54:10
+# ratios: loc_comments=107:23 imports_exports=8:2 calls_definitions=61:11
 """Checks for arcana + agendas + habituation + reclaim pricing.
 
 # === CHECKS ===
 # id: check_agendas_verify_at_end
 #   witnesses: agendas_verify_at_end
 # id: check_organizer_counts_r
-#   witnesses: agendas_organizer_counts_r
+#   witnesses: agendas_organizer_counts_r, runner_attributed_r_log
+# id: check_arcana_dealt_ownership
+#   witnesses: arcana_dealt_ownership
 # id: check_arcana_once
 #   witnesses: arcana_once_per_game
 # id: check_wayseer
@@ -25,7 +27,8 @@ import unittest
 
 import politics_runner as pr
 import weimar_data as wd
-from arcana_agendas_v1 import ArcanaModule, deal_agendas, verify_agendas
+from arcana_agendas_v1 import (ArcanaModule, deal_agendas, deal_arcana,
+                               verify_agendas)
 from cards_v1 import WeimarMachine
 from inertial_engine import InertialEngine, weimar_seed
 from rules_v1 import RulesV1
@@ -58,11 +61,24 @@ class Checks(unittest.TestCase):
         st.tallies["agendas"] = [a for a in
                                  __import__("arcana_agendas_v1").AGENDAS
                                  if a["name"] == "THE ORGANIZER"] * 2
-        st.log += [("action", 0, "X"), ("action", 0, "X"),
-                   ("action", 1, "X")]
+        st.log += [("action", 0, "X", None, 3),
+                   ("action", 1, "X", None, 1),
+                   ("action", 1, "X", None, 1)]
         v = verify_agendas(st, "win")
-        self.assertTrue(v[0]["held"])            # pid 0 strictly greatest
+        self.assertTrue(v[0]["held"])            # 3 R beats two 1 R actions
         self.assertFalse(v[1]["held"])
+
+    def test_check_arcana_dealt_ownership(self):
+        st = opening()
+        deal_arcana(st, 2, random.Random(3))
+        arc = ArcanaModule()
+        mine = st.tallies["arcana"][0]
+        other = st.tallies["arcana"][1]
+        arc.apply(other, st, WeimarMachine(wd.MACHINE_SCRIPT), None, 0, 2)
+        self.assertEqual([ev for ev in st.log if ev[0] == "arcana"],
+                         [])
+        arc.apply(mine, st, WeimarMachine(wd.MACHINE_SCRIPT), None, 0, 2)
+        self.assertTrue(any(ev[0] == "arcana" for ev in st.log))
 
     def test_check_arcana_once(self):
         st = opening()
@@ -130,4 +146,4 @@ class Checks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=94:21 imports_exports=8:2 calls_definitions=54:10
+# ratios: loc_comments=107:23 imports_exports=8:2 calls_definitions=61:11
