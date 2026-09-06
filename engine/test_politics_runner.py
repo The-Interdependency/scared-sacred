@@ -1,4 +1,4 @@
-# ratios: loc_comments=50:17 imports_exports=2:3 calls_definitions=26:12
+# ratios: loc_comments=69:21 imports_exports=2:3 calls_definitions=39:14
 """Checks for politics_runner. Run: python3 test_politics_runner.py
 
 # === CHECKS ===
@@ -14,6 +14,10 @@
 #   witnesses: runner_null_clock_terminates
 # id: check_rejects_illegal_plays
 #   witnesses: runner_rejects_illegal_plays
+# id: check_hand_discard_is_real
+#   witnesses: runner_hand_law
+# id: check_action_log_carries_r
+#   witnesses: runner_attributed_r_log
 # === END CHECKS ===
 """
 import unittest
@@ -81,7 +85,28 @@ class Checks(unittest.TestCase):
         res = self._run(deck(2, s=1), [active], rules=NoRules())
         self.assertEqual(res.state.in_play_statics, [])   # dropped silently
 
+    def test_check_hand_discard_is_real(self):
+        class Burner:
+            def __init__(self):
+                self.done = False
+            def take_turn(self, state, pid):
+                if self.done:
+                    return TurnPlays()
+                self.done = True
+                return TurnPlays(discard_cards=[state.hands[pid][0]])
+        st = GameState(draw_pile=[{"name": "BURN"}, {"name": "DRAW"}])
+        res = MatchRunner(LeakyEngine(), ScriptedMachine(deck(2, s=0)),
+                          [Burner()], st, hand_size=1).run()
+        self.assertIn("BURN", [c["name"] for c in res.state.discard_pile])
+        self.assertNotIn("BURN", [c["name"] for c in res.state.hands[0]])
+
+    def test_check_action_log_carries_r(self):
+        active = RecordingPlayer(TurnPlays(actions=[{"name": "a", "r": 3}]))
+        res = self._run(deck(2, s=0), [active])
+        action = next(ev for ev in res.state.log if ev[0] == "action")
+        self.assertEqual(action[4], 3)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# ratios: loc_comments=50:17 imports_exports=2:3 calls_definitions=26:12
+# ratios: loc_comments=69:21 imports_exports=2:3 calls_definitions=39:14
