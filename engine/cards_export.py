@@ -1,4 +1,4 @@
-# ratios: loc_comments=38:26 imports_exports=5:1 calls_definitions=23:2
+# ratios: loc_comments=40:28 imports_exports=5:1 calls_definitions=24:3
 """cards_export — emit every Fifty-Three Days card as a repo-resident JSON asset.
 
 Single source of truth stays weimar_data.py / arcana_agendas_v1.py; this
@@ -80,4 +80,4 @@ def export(root=".."):
 if __name__ == "__main__":
     idx = export(sys.argv[1] if len(sys.argv) > 1 else "..")
     print(f"exported {len(idx['cards'])} cards")
-# ratios: loc_comments=38:26 imports_exports=5:1 calls_definitions=23:2
+# ratios: loc_comments=40:28 imports_exports=5:1 calls_definitions=24:3
