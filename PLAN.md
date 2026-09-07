@@ -8,7 +8,9 @@ This document separates **frozen decisions** from **implementation planning**. A
 
 **TIWCG is the containing game system.**
 
-SCARED SACRED is content within TIWCG, not the name of the containing repository or engine.
+SCARED SACRED is content within TIWCG, not the name of the containing engine.
+This plan does not rename the Git repository while the `scared-sacred`
+repository-name ruling in `canon/canon_v03_base.md` remains active.
 
 ### Frozen stack relationship
 
@@ -59,7 +61,9 @@ What remains shared:
 ### Turn order
 
 1. **Draw Two** — draw 2 from skill-lib.
-2. **Drop Two** — drop 2 resource-generation cards.
+2. **Drop Two** — drop up to 2 resource-generation cards. If the hand has
+   fewer than 2 resource-generation cards, drop all available; if it has none,
+   pass this step.
 3. **First Twiddle**.
 4. **Main Phase I**.
 5. **Simultaneous Conflict**.
@@ -275,7 +279,11 @@ A paid kit may expand:
 
 Ownership of a paid kit should not by itself grant unbeatable territory or combat advantage over a player who does not own it.
 
-Existing SCARED SACRED Witness constraints remain independent canon and must not be accidentally weakened by the generalized TIWCG commercial model.
+Witness constraints are base-wide TIWCG canon through
+`canon/canon_v03_base.md`: Witness accounts remain giver-owned, table-bound,
+unprintable, and unsellable. SCARED SACRED remains the expansion source from
+which those constraints were promoted, but the generalized TIWCG commercial
+model must treat them as base-wide requirements.
 
 ## 16. Implementation plan
 
@@ -283,9 +291,13 @@ The following is implementation order, **not additional frozen canon**.
 
 ### Phase 0 — reconcile repository identity
 
-- Make README identify the repository as TIWCG.
+- Present README/project docs as the TIWCG system entrypoint without treating
+  README prose as a repository rename.
+- Preserve the base-canon `scared-sacred` repository-name ruling unless a later
+  canon amendment explicitly changes it.
 - Keep POLITICS / Fifty-Three Days and SCARED SACRED as contained game/content boundaries.
-- Update stale `scared-sacred` repository-name references without renaming the expansion itself.
+- Update stale `scared-sacred` content-scope references without renaming the
+  expansion or silently changing the repository-name ruling.
 - Keep current tests green while the generalized engine is introduced.
 
 ### Phase 1 — extract the common TIWCG kernel

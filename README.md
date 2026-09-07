@@ -1,6 +1,9 @@
 # TIWCG
 *The Interdependency card-game system. Current executable content includes POLITICS (base game); SCARED SACRED is Expansion Set 1.*
 
+This README presents the TIWCG system entrypoint. It does not supersede the
+base-canon repository-name ruling in [canon/canon_v03_base.md](canon/canon_v03_base.md).
+
 The frozen generalized architecture and implementation sequence are recorded in [PLAN.md](PLAN.md).
 
 Current implemented base TCG: real events as cards, the EDCM circuit as rules engine.
