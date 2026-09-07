@@ -1,7 +1,9 @@
-# SCARED SACRED (repo) — POLITICS (base game)
-*Virtual-only trading card game built on real events. Scared Sacred is Expansion Set 1.*
+# TIWCG
+*The Interdependency card-game system. Current executable content includes POLITICS (base game); SCARED SACRED is Expansion Set 1.*
 
-Base TCG: real events as cards, the EDCM circuit as rules engine.
+The frozen generalized architecture and implementation sequence are recorded in [PLAN.md](PLAN.md).
+
+Current implemented base TCG: real events as cards, the EDCM circuit as rules engine.
 Three layers: L1 SUBSTRATE (official record; not playable; compiles each
 jurisdiction's Machine deck) / L2 ENGINE (automated; the null clock
 guarantees total conversion absent human play) / L3 TABLE (players; the
@@ -20,6 +22,6 @@ VIRTUAL ONLY — no physical printing of any set, ever.
 The Litany (never satirical):
 I'm sorry. I forgive you. You are not alone. I love you.
 
-Status: executable base ruleset and automated balance harness are implemented and test-backed; human playtest and store/mobile delivery remain pending. Some explicitly logged card effects remain unresolved and must not be represented as complete.
+Status: executable base ruleset and automated balance harness are implemented and test-backed; generalized TIWCG architecture is planned in PLAN.md. Human playtest and store/mobile delivery remain pending on main. Some explicitly logged card effects remain unresolved and must not be represented as complete.
 
 hmmm — fear and the holy are the same six letters; the base game and its first expansion now also have separate addresses.
