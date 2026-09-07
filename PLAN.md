@@ -60,7 +60,7 @@ What remains shared:
 
 ### Turn order
 
-1. **Draw Two** — draw 2 from skill-lib.
+1. **Draw Two** — draw 2 from a versioned skill-lib draw source.
 2. **Drop Two** — drop up to 2 resource-generation cards. If the hand has
    fewer than 2 resource-generation cards, drop all available; if it has none,
    pass this step.
@@ -73,6 +73,10 @@ What remains shared:
 9. **End Turn**.
 
 Menagerie maintenance and persistent-state recording resolve at the end of the turn according to the active cards and context.
+
+Each draw records an immutable skill-lib content hash or repository revision so
+deterministic replay consumes the original draw source rather than the mutable
+live skill ecology.
 
 `hmmm` — whether newly dropped resource generation produces immediately on the first twiddle or only after surviving into a later productive state remains unresolved.
 
@@ -225,6 +229,11 @@ The Interdependency itself can appear as discoverable card content:
 
 These cards should emerge through play/discovery/creation rather than requiring every player to begin from an identical static collection.
 
+Generic creation does not authorize hand-authored named-human or public-figure
+cards. Human/person cards enter as sourced submissions and must route through
+the base-canon public-transcript EDCM pipeline and Erin ratification before they
+become named-figure cards.
+
 ## 12. Social-platform architecture
 
 TIWCG must be built to work through **Discord and other social-media / communication surfaces**.
@@ -237,6 +246,10 @@ A match, menagerie, identity relation, EDCM result, or AHBG territory must not b
 
 A social adapter should translate platform events into TIWCG operations and translate legal TIWCG state back into platform-appropriate presentation.
 
+Witness contexts are an explicit exception: leaving or rejoining during a
+Witness account may update transient connectivity, but must not emit or retain
+a canonical match event, provenance entry, marker, score, or comment.
+
 The minimal adapter vocabulary should be derived from actual engine needs rather than copied from any platform API. Likely operations include joining/leaving, drawing, playing, twiddling, challenging, responding, resolving, sharing, and discovering, but this list is **planning**, not frozen protocol.
 
 UCNS characterizes the geometry of connections exposed by each surface. TIWCG determines what those connections permit.
@@ -245,7 +258,7 @@ UCNS characterizes the geometry of connections exposed by each surface. TIWCG de
 
 The knowledge-kit model depends on repetition.
 
-Implementation should separate immutable/authoritative card content from per-player learning state. A player or agent should be able to accumulate observations such as exposure, attempt, correctness, confidence, and future re-exposure scheduling without rewriting the canonical card definition.
+Implementation should separate immutable/authoritative card content from per-player learning state. A player or agent should be able to accumulate externally observed learning records such as exposure, attempt, correctness, provenance-backed calibration/confidence metrics, and future re-exposure scheduling without rewriting the canonical card definition or inferring an internal state.
 
 The exact spacing algorithm is not frozen in this thread.
 
@@ -264,6 +277,10 @@ Planned support:
 
 Art must not be able to alter legality, source text, EDCM results, or relation geometry simply by replacing an image.
 
+Artwork overrides and generated art inherit the card class's canonical content
+restrictions. For EVENT cards, art must not depict victims; only counts and
+documented actor behavior are admissible.
+
 ## 15. Commercial/content boundary
 
 The monetizable layer is principally **themed upgrade knowledge/flash-card kits and presentation/content expansions**, not raw pay-to-win strength.
@@ -277,7 +294,9 @@ A paid kit may expand:
 - specialized conflict contexts;
 - domain-specific card creation material.
 
-Ownership of a paid kit should not by itself grant unbeatable territory or combat advantage over a player who does not own it.
+Ownership of a paid kit must not grant territory, combat, resource, timing,
+resolution, or other mechanical/competitive advantage over a player who does
+not own it.
 
 Witness constraints are base-wide TIWCG canon through
 `canon/canon_v03_base.md`: Witness accounts remain giver-owned, table-bound,
@@ -320,9 +339,12 @@ Do not rewrite working POLITICS behavior until the common contract can express i
 
 Implement the frozen turn law:
 
-`7 hand → draw 2 → drop 2 → twiddle → Main I → simultaneous conflict → resolution → Main II → twiddle → end`
+`7 hand -> draw 2 from versioned skill-lib source -> drop up to 2 available resource-generation cards/pass if none -> twiddle -> Main I -> simultaneous conflict -> resolution -> Main II -> twiddle -> end`
 
 Add 20 METAPAT starting energy and resource-generation objects behind explicit tests.
+
+Persist the skill-lib source revision or content hash for each draw before
+claiming deterministic replay.
 
 Resolve the immediate-vs-delayed production `hmmm` before making it implicit behavior.
 
@@ -409,7 +431,7 @@ Implementation should fail tests rather than violate these silently:
 6. Logical fallacies alter context/relations; they do not magically establish truth.
 7. Paradigm collapse removes unsupported representation, not independently supported relations.
 8. `hmmm` is preserved when honest resolution is unavailable.
-9. Knowledge-kit ownership does not equal raw pay-to-win power.
+9. Knowledge-kit ownership does not grant paid mechanical or competitive advantage.
 10. Provenance and lineage survive card transformation.
 
 ## 18. Open `hmmm`
