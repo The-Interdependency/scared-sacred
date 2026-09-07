@@ -5,7 +5,7 @@
     <application
         android:name="com.chaquo.python.android.PyApplication"
         android:allowBackup="true"
-        android:label="SCARED SACRED"
+        android:label="TIWCG — POLITICS"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar"
         android:usesCleartextTraffic="true">
