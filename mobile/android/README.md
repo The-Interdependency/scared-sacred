@@ -1,13 +1,12 @@
-# SCARED SACRED Android shell
+# TIWCG Android shell
 
-This module wraps the existing tested Python game rather than rewriting it.
-Chaquopy packages `engine/` and `render/` directly; `mobile_bridge.py` starts
-the same table server on `127.0.0.1`, and the Android WebView is only a shell.
+This module wraps the existing tested POLITICS / Fifty-Three Days Python game rather than rewriting it. Chaquopy packages `engine/` and `render/` directly; `mobile_bridge.py` starts the same table server on `127.0.0.1`, and the Android WebView is only a shell.
+
+SCARED SACRED remains Expansion Set 1 inside TIWCG; it is not the Android application identity.
 
 ## Store boundary
 
-RevenueCat exists here to satisfy a real product boundary without selling game
-power, Witness Accounts, or access to the ruleset.
+RevenueCat exists here to satisfy a real product boundary without selling game power, Witness Accounts, or access to the ruleset.
 
 - entitlement: `sacred_table` by default
 - product: configure one Google Play one-time product as **non-consumable**
@@ -15,13 +14,15 @@ power, Witness Accounts, or access to the ruleset.
 - effect: permanent cosmetic Sacred Table skin only
 - restore: exposed in the native shell
 
-Witness Accounts remain giver-owned, table-bound, and unsellable per base canon.
-All playable mechanics remain available without purchase.
+Witness Accounts remain giver-owned, table-bound, and unsellable per base canon. All playable mechanics remain available without purchase.
+
+## Android identity
+
+- app label: `TIWCG — POLITICS`
+- application ID: `org.theinterdependency.tiwcg`
+- first public version: `1.0.0` / version code `1`
 
 ## Build
-
-The build intentionally pins the newest combination currently claimed compatible
-by both Android and Chaquopy rather than using incompatible latest versions:
 
 - Android Gradle Plugin 9.2.1
 - Gradle 9.4.1
@@ -33,24 +34,24 @@ by both Android and Chaquopy rather than using incompatible latest versions:
 From `mobile/android`:
 
 ```sh
-gradle :app:assembleDebug
+gradle --no-daemon :app:assembleDebug
+gradle --no-daemon :app:bundleRelease
 ```
 
 The public RevenueCat SDK key is injected at build time and is not committed:
 
 ```sh
-gradle :app:assembleDebug \
+gradle --no-daemon :app:bundleRelease \
   -PREVENUECAT_API_KEY=goog_xxx \
   -PREVENUECAT_ENTITLEMENT_ID=sacred_table
 ```
 
-With no key, the game still builds and runs; the purchase controls remain
-visibly unconfigured rather than pretending monetization works.
+With no key, the game still builds and runs; the purchase controls remain visibly unconfigured rather than pretending monetization works.
 
-## Store release boundary
+## Shipaton handoff
 
-A Shipaton-eligible release still requires the external store configuration:
-Google Play app, one-time product, RevenueCat project/offering/entitlement,
-signed AAB, store listing, judge access, icon, screenshot, and demo video.
+See [`SHIPATON.md`](SHIPATON.md) for the exact playable demo path, release gates, Devpost deliverables, store-positioning copy, and two-minute video sequence.
+
+A Shipaton-eligible release still requires external store configuration and publication: Google Play app, one-time product, RevenueCat project/offering/entitlement, signed AAB, store listing, judge access, icon, screenshot, and demo video.
 
 hmmm — commerce belongs around the table, not between a witness and the room.

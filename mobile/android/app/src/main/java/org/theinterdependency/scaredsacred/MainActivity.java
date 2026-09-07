@@ -1,4 +1,4 @@
-package org.theinterdependency.scaredsacred;
+package org.theinterdependency.tiwcg;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -177,14 +177,12 @@ public final class MainActivity extends Activity {
 
             @Override
             public void onError(PurchasesError error, boolean userCancelled) {
-                purchaseButton.setEnabled(!userCancelled && sacredTablePackage != null);
                 if (userCancelled) {
                     purchaseStatus.setText("SACRED TABLE: purchase cancelled");
-                    purchaseButton.setEnabled(true);
                 } else {
                     purchaseStatus.setText("SACRED TABLE: purchase failed");
-                    purchaseButton.setEnabled(true);
                 }
+                purchaseButton.setEnabled(sacredTablePackage != null);
             }
         });
     }
