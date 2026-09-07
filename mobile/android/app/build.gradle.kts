@@ -15,15 +15,15 @@ val revenueCatEntitlement = providers.gradleProperty("REVENUECAT_ENTITLEMENT_ID"
     .getOrElse("sacred_table")
 
 android {
-    namespace = "org.theinterdependency.scaredsacred"
+    namespace = "org.theinterdependency.tiwcg"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.theinterdependency.scaredsacred"
+        applicationId = "org.theinterdependency.tiwcg"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
